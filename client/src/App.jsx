@@ -60,6 +60,28 @@ const destIcon = L.divIcon({
   popupAnchor: [0, -17]
 });
 
+// Origin Marker Icon - Google Maps Green Pin
+const originIcon = L.divIcon({
+  className: 'custom-origin-icon',
+  html: `<div class="bg-[#1e8e3e] text-white p-2 rounded-full shadow-lg border-2 border-white flex items-center justify-center ring-4 ring-green-100">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+         </div>`,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -17]
+});
+
+// Intermediate Waypoint Marker Icon - Amber Tag
+const createWaypointIcon = (index) => L.divIcon({
+  className: 'custom-waypoint-icon',
+  html: `<div class="bg-amber-500 text-white font-black text-xs w-7 h-7 rounded-full shadow-lg border-2 border-white flex items-center justify-center ring-4 ring-amber-100 shadow-amber-500/40">
+          ${index + 1}
+         </div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
+  popupAnchor: [0, -14]
+});
+
 // Animated EV Car Marker Icon - Google Blue Navigation Puck
 const createCarIcon = (heading = 0) => L.divIcon({
   className: 'custom-car-icon',
@@ -179,6 +201,8 @@ export default function App() {
   
   const [sourceLocation, setSourceLocation] = useState({ lat: 28.6139, lng: 77.2090, displayName: 'New Delhi' });
   const [destLocation, setDestLocation] = useState({ lat: 26.9124, lng: 75.7873, displayName: 'Jaipur, Rajasthan' });
+  const [waypoints, setWaypoints] = useState([]);
+  const [selectedNetwork, setSelectedNetwork] = useState('All Networks');
   const [userGpsLocation, setUserGpsLocation] = useState(null);
 
   // Live Navigation Active State
@@ -306,9 +330,16 @@ export default function App() {
   }, []);
 
   // Main Route Planning Handler
-  const handlePlanRoute = async (srcOverride = null, destOverride = null) => {
+  const handlePlanRoute = async (
+    srcOverride = null, 
+    destOverride = null, 
+    waypointsOverride = null, 
+    networkOverride = null
+  ) => {
     const src = srcOverride || sourceLocation;
     const dest = destOverride || destLocation;
+    const currentWaypoints = waypointsOverride !== null ? waypointsOverride : waypoints;
+    const currentNetwork = networkOverride !== null ? networkOverride : selectedNetwork;
 
     if (!src || !dest) {
       alert('Please select valid Source and Destination locations.');
@@ -325,9 +356,14 @@ export default function App() {
     setIsSimPaused(false);
 
     try {
+      const validWaypoints = (currentWaypoints || [])
+        .filter(wp => wp && wp.location && wp.location.lat && wp.location.lng)
+        .map(wp => [wp.location.lat, wp.location.lng]);
+
       const osrmResult = await getRouteFromOSRM(
         [src.lat, src.lng],
-        [dest.lat, dest.lng]
+        [dest.lat, dest.lng],
+        validWaypoints
       );
 
       setRouteData(osrmResult);
@@ -345,7 +381,8 @@ export default function App() {
         minSocBufferPercent: minSocBuffer,
         preferredPlug: selectedPlug,
         acMode,
-        ambientTemp
+        ambientTemp,
+        preferredNetwork: currentNetwork
       });
 
       const trafficPromise = fetchLiveRouteTraffic(osrmResult.coordinates);
@@ -662,12 +699,16 @@ export default function App() {
         onOpenPassengerQrModal={() => setShowPassengerQrModal(true)}
         evPresetsList={evPresetsList}
         routeData={routeData}
-        smartHalts={smartHalts}
+        smartHalts={stops}
         user={user}
         token={token}
         onOpenAuthModal={() => setShowAuthModal(true)}
         onOpenDashboard={() => setShowDashboardModal(true)}
         onReturnToLanding={() => setActiveView('landing')}
+        waypoints={waypoints}
+        setWaypoints={setWaypoints}
+        selectedNetwork={selectedNetwork}
+        setSelectedNetwork={setSelectedNetwork}
       />
 
 
@@ -781,11 +822,12 @@ export default function App() {
             isNavigating={isNavigating}
           />
 
-          {/* Tile Layer - Google Maps Style Clean Tiles */}
+          {/* Tile Layer - Google Maps Clean Daytime Tiles or OLED CARTO Dark Matter Night HUD */}
           {activeTile === 'dark' ? (
             <TileLayer
               attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              subdomains={['a', 'b', 'c', 'd']}
             />
           ) : (
             <TileLayer
@@ -794,11 +836,15 @@ export default function App() {
             />
           )}
 
-          {/* Standard Polyline - Classic Google Maps Route Blue */}
+          {/* Standard Polyline - Classic Google Maps Route Blue or OLED Cyan in Night HUD */}
           {routeData && !showTraffic && (
             <Polyline
               positions={routeData.coordinates}
-              pathOptions={{ color: '#1a73e8', weight: 7, opacity: 0.95 }}
+              pathOptions={{ 
+                color: activeTile === 'dark' ? '#00e5ff' : '#1a73e8', 
+                weight: activeTile === 'dark' ? 8 : 7, 
+                opacity: 0.95 
+              }}
             />
           )}
 
@@ -827,11 +873,44 @@ export default function App() {
             </React.Fragment>
           ))}
 
+          {/* Origin Marker */}
+          {sourceLocation && (
+            <Marker position={[sourceLocation.lat, sourceLocation.lng]} icon={originIcon}>
+              <Popup>
+                <div className="font-sans p-1">
+                  <span className="text-[10px] font-bold text-[#1e8e3e] uppercase">Origin Location</span>
+                  <div className="font-bold text-xs text-slate-800 mt-0.5">{sourceLocation.displayName}</div>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {/* Intermediate Waypoints (Via Stops) Markers */}
+          {waypoints && waypoints.map((wp, idx) => (
+            wp.location && (
+              <Marker
+                key={`wp-marker-${idx}`}
+                position={[wp.location.lat, wp.location.lng]}
+                icon={createWaypointIcon(idx)}
+              >
+                <Popup>
+                  <div className="font-sans p-1">
+                    <span className="text-[10px] font-bold text-amber-600 uppercase">Via Stop #{idx + 1}</span>
+                    <div className="font-bold text-xs text-slate-800 mt-0.5">{wp.location.displayName}</div>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          ))}
+
           {/* Destination Marker */}
           {destLocation && (
             <Marker position={[destLocation.lat, destLocation.lng]} icon={destIcon}>
               <Popup>
-                <div className="font-bold text-xs">Destination: {destLocation.displayName}</div>
+                <div className="font-sans p-1">
+                  <span className="text-[10px] font-bold text-[#d93025] uppercase">Destination</span>
+                  <div className="font-bold text-xs text-slate-800 mt-0.5">{destLocation.displayName}</div>
+                </div>
               </Popup>
             </Marker>
           )}

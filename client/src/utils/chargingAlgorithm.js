@@ -11,6 +11,7 @@ export const calculateSmartHalts = async ({
   currentRangeKm,
   minSocBufferPercent,
   preferredPlug = 'CCS2',
+  preferredNetwork = 'All Networks',
   acMode = 'Normal AC',
   ambientTemp = 30
 }) => {
@@ -59,8 +60,9 @@ export const calculateSmartHalts = async ({
 
     // Check if battery reaches reserve threshold
     if (remainingRangeKm <= minRangeBufferKm && currentDist < totalDistanceKm - 15) {
-      const nearby = await fetchStationsNearPoint(point.lat, point.lng, 15);
+      const nearby = await fetchStationsNearPoint(point.lat, point.lng, 15, preferredNetwork);
       const selectedStation = nearby[0];
+
 
       const arrivalSocPercent = Math.max(5, currentSocPercent);
       const targetChargeSocPercent = 85;
