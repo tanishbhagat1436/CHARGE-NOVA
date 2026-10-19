@@ -21,6 +21,7 @@ import {
 import { searchLocation, reverseGeocode, getBestUserLocation } from '../services/nominatimService';
 import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiConfig';
+import { calculateTripCostAndSavings } from '../utils/costSavingsMath';
 
 export const INITIAL_EV_PRESETS = [
   { id: 'nexon', name: 'Tata Nexon EV Max', range: 437, battery: 40.5, plug: 'CCS2' },
@@ -60,6 +61,7 @@ export default function InputPanel({
   onOpenPassengerQrModal,
   evPresetsList,
   routeData,
+  smartHalts,
   user,
   token,
   onOpenAuthModal,
@@ -91,9 +93,14 @@ export default function InputPanel({
   }, [destLocation]);
 
   const fetchSavedTrips = async () => {
+    if (!token || !user) {
+      setSavedTrips([]);
+      return;
+    }
     try {
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.get(`${getApiBaseUrl()}/api/routes/history`, { headers });
+      const response = await axios.get(`${getApiBaseUrl()}/api/routes/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (response.data?.data) {
         setSavedTrips(response.data.data);
       }
@@ -103,6 +110,10 @@ export default function InputPanel({
   };
 
   useEffect(() => {
+    if (!token || !user) {
+      setSavedTrips([]);
+      return;
+    }
     fetchSavedTrips();
   }, [user, token]);
 
@@ -112,24 +123,37 @@ export default function InputPanel({
       return;
     }
 
+    if (!user || !token) {
+      alert('Please sign in or create an account to save trips to your personal dashboard.');
+      if (onOpenAuthModal) onOpenAuthModal();
+      return;
+    }
+
     try {
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const costData = calculateTripCostAndSavings(routeData.distanceKm);
       await axios.post(`${getApiBaseUrl()}/api/routes/save`, {
-        title: `${sourceLocation.city || 'Origin'} to ${destLocation.city || 'Destination'} Corridor`,
+        title: `${sourceLocation.city || sourceLocation.displayName.split(',')[0]} to ${destLocation.city || destLocation.displayName.split(',')[0]} Corridor`,
         sourceName: sourceLocation.displayName,
         destName: destLocation.displayName,
         sourceCoords: [sourceLocation.lat, sourceLocation.lng],
         destCoords: [destLocation.lat, destLocation.lng],
         vehicleName: selectedVehicle.name,
         distanceKm: routeData.distanceKm,
-        durationMins: routeData.durationMins
-      }, { headers });
-      alert('⚡ Trip saved to your account in MongoDB Atlas successfully!');
+        durationMins: routeData.durationMins,
+        stopsCount: smartHalts?.length || 0,
+        chargingCostINR: costData.evChargingCostINR,
+        savedCostINR: costData.savedCostINR
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(`⚡ Trip saved to ${user?.name ? user.name.split(' ')[0] + "'s" : 'your'} personal account successfully!`);
       fetchSavedTrips();
     } catch (error) {
-      alert('Trip saved to local history session!');
+      console.error('Save Trip Error:', error);
+      alert('Failed to save trip: ' + (error.response?.data?.error || error.message));
     }
   };
+
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -286,14 +310,27 @@ export default function InputPanel({
         {showSavedTrips && (
           <div className="bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0] space-y-2 animate-in fade-in duration-200 shadow-sm">
             <div className="flex justify-between items-center text-xs font-bold text-[#202124]">
-              <span className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-[#1a73e8]" /> Saved MongoDB Trips</span>
-              <button onClick={() => setShowSavedTrips(false)} className="text-[#5f6368] hover:text-[#202124]">✕</button>
+              <span className="flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-[#1a73e8]" /> 
+                {user ? `${(user.name || 'Account').split(' ')[0]}'s Saved Trips` : 'Saved Trips'}
+              </span>
+              <button onClick={() => setShowSavedTrips(false)} className="text-[#5f6368] hover:text-[#202124] cursor-pointer">✕</button>
             </div>
-            {savedTrips.length > 0 ? (
-              <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+            {!user ? (
+              <div className="p-3 text-center bg-white rounded-lg border border-[#dadce0] space-y-2">
+                <p className="text-[11px] text-[#5f6368]">Sign in to access your personal saved routes.</p>
+                <button
+                  onClick={() => { setShowSavedTrips(false); if (onOpenAuthModal) onOpenAuthModal(); }}
+                  className="px-3 py-1 bg-[#1a73e8] hover:bg-[#1557b0] text-white text-[11px] font-semibold rounded-full shadow-sm cursor-pointer transition-all"
+                >
+                  Sign In / Sign Up
+                </button>
+              </div>
+            ) : savedTrips.length > 0 ? (
+              <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
                 {savedTrips.map((t, idx) => (
                   <button
-                    key={idx}
+                    key={t._id || idx}
                     onClick={() => {
                       const src = { lat: t.sourceCoords[0], lng: t.sourceCoords[1], displayName: t.sourceName };
                       const dst = { lat: t.destCoords[0], lng: t.destCoords[1], displayName: t.destName };
@@ -304,18 +341,21 @@ export default function InputPanel({
                         onSelectSavedTrip(src, dst);
                       }
                     }}
-                    className="w-full text-left p-2 bg-white hover:bg-blue-50 rounded-lg text-[11px] flex justify-between items-center text-[#202124] border border-[#dadce0]"
+                    className="w-full text-left p-2 bg-white hover:bg-blue-50 rounded-lg text-[11px] flex justify-between items-center text-[#202124] border border-[#dadce0] transition-colors cursor-pointer"
                   >
-                    <span className="truncate font-medium">{t.title || `${t.sourceName} ➔ ${t.destName}`}</span>
+                    <span className="truncate font-medium max-w-[210px]">{t.title || `${t.sourceName} ➔ ${t.destName}`}</span>
                     <span className="text-[#1a73e8] font-mono font-bold shrink-0">{t.distanceKm} km</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-[11px] text-[#5f6368]">No saved trips yet.</div>
+              <div className="text-[11px] text-[#5f6368] p-2 bg-white rounded-lg border border-[#dadce0] text-center">
+                No trips saved to your account yet.
+              </div>
             )}
           </div>
         )}
+
 
         {/* EV Model Preset */}
         <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">

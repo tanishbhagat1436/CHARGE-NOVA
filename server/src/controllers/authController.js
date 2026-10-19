@@ -69,6 +69,7 @@ export const registerUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        defaultVehicle: user.defaultVehicle || 'Tata Nexon EV Max',
         createdAt: user.createdAt
       }
     });
@@ -118,6 +119,7 @@ export const loginUser = async (req, res) => {
         id: user._id || user.id,
         name: user.name,
         email: user.email,
+        defaultVehicle: user.defaultVehicle || 'Tata Nexon EV Max',
         createdAt: user.createdAt
       }
     });
@@ -141,6 +143,7 @@ export const getMe = async (req, res) => {
         id: req.user._id || req.user.id,
         name: req.user.name,
         email: req.user.email,
+        defaultVehicle: req.user.defaultVehicle || 'Tata Nexon EV Max',
         createdAt: req.user.createdAt
       }
     });
@@ -148,3 +151,55 @@ export const getMe = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Server error fetching user profile.' });
   }
 };
+
+// @route   PUT /api/auth/profile
+// @desc    Update user profile & default vehicle
+export const updateProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated.' });
+    }
+
+    const { name, defaultVehicle } = req.body;
+    const currentUserId = req.user._id || req.user.id;
+
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findById(currentUserId);
+      if (!user) return res.status(404).json({ success: false, error: 'User not found.' });
+      if (name) user.name = name.trim();
+      if (defaultVehicle) user.defaultVehicle = defaultVehicle.trim();
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully!',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          defaultVehicle: user.defaultVehicle,
+          createdAt: user.createdAt
+        }
+      });
+    } else {
+      const user = inMemoryUsers.find(u => String(u._id || u.id) === String(currentUserId));
+      if (user) {
+        if (name) user.name = name.trim();
+        if (defaultVehicle) user.defaultVehicle = defaultVehicle.trim();
+      }
+      return res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully!',
+        user: {
+          id: currentUserId,
+          name: user?.name || req.user.name,
+          email: user?.email || req.user.email,
+          defaultVehicle: user?.defaultVehicle || defaultVehicle || 'Tata Nexon EV Max',
+          createdAt: req.user.createdAt
+        }
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+};
+

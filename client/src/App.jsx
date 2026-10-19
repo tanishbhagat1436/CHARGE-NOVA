@@ -27,6 +27,8 @@ import { reverseGeocode, getBestUserLocation } from './services/nominatimService
 import { calculateDistanceKm } from './services/openChargeMapService';
 import { fetchLiveRouteTraffic } from './services/liveTrafficService';
 import { checkSpeedCameraAlert } from './utils/speedCameraService';
+import { getApiBaseUrl } from './services/apiConfig';
+
 
 // Leaflet Default Marker Icon Fix
 delete L.Icon.Default.prototype._getIconUrl;
@@ -114,10 +116,41 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDashboardModal, setShowDashboardModal] = useState(false);
 
+  // Verify and sync user profile on mount
+  useEffect(() => {
+    const verifyToken = async () => {
+      const savedToken = localStorage.getItem('charge_nova_token');
+      if (!savedToken) return;
+
+      try {
+        const response = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${savedToken}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data?.user) {
+            setUser(data.user);
+            localStorage.setItem('charge_nova_user', JSON.stringify(data.user));
+          }
+        } else if (response.status === 401) {
+          localStorage.removeItem('charge_nova_token');
+          localStorage.removeItem('charge_nova_user');
+          setUser(null);
+          setToken(null);
+        }
+      } catch (err) {
+        // Keep existing localStorage state during offline or cold start
+      }
+    };
+
+    verifyToken();
+  }, []);
+
   const handleAuthSuccess = (userObj, tokenStr) => {
     setUser(userObj);
     setToken(tokenStr);
   };
+
 
   const handleLogout = () => {
     setUser(null);
@@ -629,12 +662,14 @@ export default function App() {
         onOpenPassengerQrModal={() => setShowPassengerQrModal(true)}
         evPresetsList={evPresetsList}
         routeData={routeData}
+        smartHalts={smartHalts}
         user={user}
         token={token}
         onOpenAuthModal={() => setShowAuthModal(true)}
         onOpenDashboard={() => setShowDashboardModal(true)}
         onReturnToLanding={() => setActiveView('landing')}
       />
+
 
       {/* MAIN MAP CONTAINER */}
       <main className="flex-1 h-full relative overflow-hidden">
@@ -941,8 +976,10 @@ export default function App() {
           onClose={() => setShowDashboardModal(false)}
           onLogout={handleLogout}
           onLoadTripOnMap={handleLoadTripOnMap}
+          onOpenAuthModal={() => setShowAuthModal(true)}
         />
       )}
+
 
     </div>
   );
