@@ -32,11 +32,11 @@ export const queryNovaAiAssistant = async ({
   }
 
   // 2. Nearest Fast Charging Station
-  if (query.includes('nearest') || query.includes('charger') || query.includes('station') || query.includes('plug') || query.includes('tata')) {
+  if (query.includes('nearest') || query.includes('charger') || query.includes('station') || query.includes('tata') || query.includes('zeon')) {
     if (nextStop) {
       return `🔌 The nearest recommended fast charging station is ${nextStop.name} at Km ${nextStop.distanceFromStartKm}. It features ${nextStop.power || 60} kW DC Fast Charging (${nextStop.connectors?.join(', ') || 'CCS2'}) with amenities including Food Court & Restrooms.`;
     }
-    return `🔌 Tata Power & Zeon EV Fast Chargers are available along your highway corridor. Click any station pin on the map to reserve a 30-minute slot!`;
+    return `🔌 Tata Power, Zeon, Jio-bp, and Statiq EV Fast Chargers are available along your highway corridor. Click any station pin on the map to reserve a 30-minute slot!`;
   }
 
   // 3. Traffic Status
@@ -57,6 +57,31 @@ export const queryNovaAiAssistant = async ({
     return `☕ Nova AI recommends taking a 15-minute coffee break at ${nextStop?.name || 'the next Highway Service Hub'}. Fast charging will replenish your battery while you relax!`;
   }
 
+  // 6. Battery Health & Degradation
+  if (query.includes('health') || query.includes('degrad') || query.includes('warranty') || query.includes('life')) {
+    return `🔋 Battery Health Diagnostics: Your ${vehicle.name} utilizes advanced LFP/NMC lithium-ion cell chemistry with liquid thermal management. Fast charging between 10%–85% preserves 94%+ State-of-Health (SoH) over 160,000 km. Most OEM warranties guarantee 8 years or 160,000 km!`;
+  }
+
+  // 7. Connector Types (CCS2, Type 2, GB/T)
+  if (query.includes('plug') || query.includes('connector') || query.includes('ccs') || query.includes('type 2') || query.includes('gbt')) {
+    return `🔌 Connector Guide: In India, CCS2 (Combined Charging System 2) is the standard for DC fast charging (up to 150 kW). Type 2 AC is for 7.2–11 kW overnight wallboxes. All recommended stops on your route feature native CCS2 connectors.`;
+  }
+
+  // 8. Emergency / Breakdown / SOS
+  if (query.includes('emergency') || query.includes('sos') || query.includes('breakdown') || query.includes('puncture') || query.includes('tow')) {
+    return `🚨 24x7 Emergency Assistance: Click the red SOS button on your top toolbar for immediate access to national highway RSA helplines (1033 NHAI, 112 Emergency), nearby EV mobile towing, and 24x7 battery rescue services!`;
+  }
+
+  // 9. Efficiency & Driving Tips (Regen, Eco Mode)
+  if (query.includes('tip') || query.includes('efficient') || query.includes('regen') || query.includes('eco') || query.includes('range')) {
+    return `💡 EV Highway Efficiency Tips:\n1. Maintain steady 80–90 km/h cruising on expressways for maximum aerodynamic range.\n2. Set Regenerative Braking to Level 2/3 during downhill highway passes.\n3. Pre-cool the cabin while plugged into the charger to save up to 10% battery!`;
+  }
+
+  // 10. Weather & Temperature
+  if (query.includes('temp') || query.includes('heat') || query.includes('summer') || query.includes('winter') || query.includes('ac')) {
+    return `🌡️ Climate & Thermal Impact: Ambient temperatures above 38°C or Max AC draw up to ~15% extra battery power for active chiller loop cooling. CHARGE-NOVA automatically accounts for this in your recommended stops!`;
+  }
+
   // Default AI Smart Response
-  return `🤖 Nova AI Assistant Active: Your ${vehicle.name} is navigating a ${distanceKm} km highway corridor to ${destLocation?.displayName || 'destination'}. Your battery is at ${currentSoc}% (${currentRangeKm} km range). How else can I assist your drive today?`;
+  return `🤖 Nova AI Copilot Active: Your ${vehicle.name} is navigating a ${distanceKm} km highway corridor to ${destLocation?.displayName || 'destination'}. Your battery is at ${currentSoc}% (~${currentRangeKm} km range). Ask me about charging stops, fuel savings, traffic, or battery health!`;
 };

@@ -14,7 +14,9 @@ import {
   QrCode,
   Search,
   User,
-  LogIn
+  LogIn,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { searchLocation, reverseGeocode, getBestUserLocation } from '../services/nominatimService';
 import axios from 'axios';
@@ -74,6 +76,7 @@ export default function InputPanel({
 
   const [savedTrips, setSavedTrips] = useState([]);
   const [showSavedTrips, setShowSavedTrips] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     if (sourceLocation && sourceLocation.displayName) {
@@ -177,6 +180,41 @@ export default function InputPanel({
     }
   };
 
+  // Minimal Collapsed Floating Google Search Pill Mode
+  if (isCollapsed) {
+    return (
+      <div 
+        className="fixed top-4 left-4 z-20 font-sans animate-in fade-in duration-200"
+        style={{ zIndex: 9995 }}
+      >
+        <div className="bg-white/95 backdrop-blur-md border border-[#dadce0] p-1.5 px-3 rounded-full shadow-lg flex items-center space-x-2 text-[#202124]">
+          <div 
+            className="p-1.5 bg-[#1a73e8] text-white rounded-full cursor-pointer shadow-xs"
+            onClick={() => setIsCollapsed(false)}
+            title="Expand Route Planner"
+          >
+            <Zap className="w-3.5 h-3.5 fill-current" />
+          </div>
+          <div 
+            className="text-xs font-semibold cursor-pointer max-w-[190px] sm:max-w-xs truncate"
+            onClick={() => setIsCollapsed(false)}
+          >
+            <span className="text-[#1a73e8]">{sourceLocation?.city || 'Origin'}</span>
+            <span className="text-[#5f6368] mx-1">➔</span>
+            <span className="text-[#1e8e3e]">{destLocation?.city || 'Destination'}</span>
+          </div>
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-[#202124] text-[11px] font-bold rounded-full transition-all border border-slate-200 flex items-center gap-0.5 cursor-pointer"
+          >
+            <span>Edit</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <aside className="w-full md:w-[400px] h-full bg-white border-r border-[#dadce0] flex flex-col z-20 shadow-md relative font-sans text-[#202124]">
       
@@ -229,6 +267,14 @@ export default function InputPanel({
             title="View MongoDB Saved Trips"
           >
             <Database className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className="p-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] rounded-full border border-[#dadce0] transition-all"
+            title="Collapse panel to view full map"
+          >
+            <ChevronLeft className="w-4 h-4" />
           </button>
         </div>
       </div>

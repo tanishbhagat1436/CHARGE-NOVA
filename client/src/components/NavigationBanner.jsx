@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowUp, 
   CornerUpLeft, 
@@ -7,7 +7,9 @@ import {
   RotateCcw, 
   Gauge, 
   MapPin,
-  X
+  X,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function NavigationBanner({ 
@@ -18,6 +20,28 @@ export default function NavigationBanner({
   isSimulating,
   onClose
 }) {
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
+  // Web Speech API Voice Prompt Helper
+  const speakInstruction = (text) => {
+    if ('speechSynthesis' in window && text) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  useEffect(() => {
+    if (voiceEnabled && currentStep?.instruction) {
+      const voiceText = nextStepDistanceKm > 0 
+        ? `In ${nextStepDistanceKm} kilometers, ${currentStep.instruction}`
+        : currentStep.instruction;
+      speakInstruction(voiceText);
+    }
+  }, [currentStep, nextStepDistanceKm, voiceEnabled]);
+
   if (!currentStep) return null;
 
   const renderManeuverIcon = (type, modifier) => {
@@ -77,11 +101,24 @@ export default function NavigationBanner({
           </div>
         </div>
 
+        {/* Voice Audio Speaker Toggle */}
+        <button
+          onClick={() => {
+            const next = !voiceEnabled;
+            setVoiceEnabled(next);
+            if (next) speakInstruction(currentStep.instruction);
+          }}
+          className={`p-1.5 rounded-lg transition-colors shrink-0 ${voiceEnabled ? 'bg-white text-[#137333] shadow-xs' : 'text-green-200 hover:text-white hover:bg-[#0d652d]'}`}
+          title={voiceEnabled ? "Mute Voice Guidance" : "Enable Voice Navigation Guidance (Web Speech)"}
+        >
+          {voiceEnabled ? <Volume2 className="w-4 h-4 fill-current" /> : <VolumeX className="w-4 h-4" />}
+        </button>
+
         {/* Close Button */}
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1 text-green-200 hover:text-white hover:bg-[#0d652d] rounded-lg transition-colors shrink-0 ml-1"
+            className="p-1 text-green-200 hover:text-white hover:bg-[#0d652d] rounded-lg transition-colors shrink-0"
             title="Close Turn Guide"
           >
             <X className="w-3.5 h-3.5" />
