@@ -6,6 +6,7 @@ import { connectDB } from './config/db.js';
 import stationRoutes from './routes/stationRoutes.js';
 import routeRoutes from './routes/routeRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import reservationRoutes from './routes/reservationRoutes.js';
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.get('/api/network-info', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/stations', stationRoutes);
 app.use('/api/routes', routeRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ Charge Nova Server running on port ${PORT} (0.0.0.0)`);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Download, ExternalLink, X, MapPin, Zap, Check } from 'lucide-react';
+import { Download, ExternalLink, X, MapPin, Zap, Check, FileCode, Car } from 'lucide-react';
+import { downloadGpxFile } from '../utils/gpxGenerator';
 
 export default function ExportModal({
   routeData,
@@ -7,11 +8,27 @@ export default function ExportModal({
   sourceName,
   destName,
   vehicleName,
+  waypoints = [],
   onClose
 }) {
   const [downloaded, setDownloaded] = useState(false);
+  const [gpxDownloaded, setGpxDownloaded] = useState(false);
 
   if (!routeData) return null;
+
+  // Handle GPX Download
+  const handleDownloadGpx = () => {
+    downloadGpxFile({
+      routeData,
+      stops,
+      sourceName,
+      destName,
+      waypoints,
+      vehicleName
+    });
+    setGpxDownloaded(true);
+    setTimeout(() => setGpxDownloaded(false), 3000);
+  };
 
   // Launch Google Maps multi-waypoint URL
   const handleOpenGoogleMaps = () => {
@@ -78,9 +95,24 @@ export default function ExportModal({
           </div>
 
           <div className="space-y-2 pt-1">
+            {/* GPX Car Infotainment Button */}
+            <button
+              onClick={handleDownloadGpx}
+              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
+            >
+              {gpxDownloaded ? <Check className="w-4 h-4 text-white" /> : <FileCode className="w-4 h-4" />}
+              <span>{gpxDownloaded ? 'GPX File Downloaded!' : 'Download .GPX File (Car Infotainment)'}</span>
+            </button>
+            <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#5f6368]">
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Android Auto</span>
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Apple CarPlay</span>
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Garmin</span>
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">OSMAnd</span>
+            </div>
+
             <button
               onClick={handleExportPdf}
-              className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm"
+              className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
             >
               {downloaded ? <Check className="w-4 h-4 text-white" /> : <Download className="w-4 h-4" />}
               <span>{downloaded ? 'Opening Print Dialog...' : 'Download / Print PDF Itinerary'}</span>
@@ -88,7 +120,7 @@ export default function ExportModal({
 
             <button
               onClick={handleOpenGoogleMaps}
-              className="w-full py-2.5 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm"
+              className="w-full py-2.5 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
             >
               <ExternalLink className="w-4 h-4 text-[#1a73e8]" />
               <span>Launch in Google Maps (Multi-Stop)</span>

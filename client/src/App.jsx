@@ -28,6 +28,7 @@ import { calculateDistanceKm } from './services/openChargeMapService';
 import { fetchLiveRouteTraffic } from './services/liveTrafficService';
 import { checkSpeedCameraAlert } from './utils/speedCameraService';
 import { getApiBaseUrl } from './services/apiConfig';
+import { Navigation as NavIcon, X, AlertTriangle } from 'lucide-react';
 
 
 // Leaflet Default Marker Icon Fix
@@ -122,6 +123,40 @@ function MapBoundsController({ bounds, center, zoom, carCoords, autoFollowCar, i
 
   return null;
 }
+
+// Calculate minimum perpendicular distance from a point to a polyline in meters
+const getDistanceToRouteMeters = (carPoint, polyline) => {
+  if (!carPoint || !polyline || polyline.length < 2) return 0;
+  const carLat = carPoint[0];
+  const carLng = carPoint[1];
+  let minDistanceMeters = Infinity;
+
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const p1 = polyline[i];
+    const p2 = polyline[i + 1];
+
+    const x = (p2[1] - p1[1]) * Math.cos(((p1[0] + p2[0]) / 2) * (Math.PI / 180));
+    const y = p2[0] - p1[0];
+    const segmentLenSq = x * x + y * y;
+
+    let t = 0;
+    if (segmentLenSq > 0) {
+      const u = (carLng - p1[1]) * Math.cos(((p1[0] + p2[0]) / 2) * (Math.PI / 180));
+      const v = carLat - p1[0];
+      t = Math.max(0, Math.min(1, (u * x + v * y) / segmentLenSq));
+    }
+
+    const nearestLat = p1[0] + t * (p2[0] - p1[0]);
+    const nearestLng = p1[1] + t * (p2[1] - p1[1]);
+
+    const distMeters = calculateDistanceKm(carLat, carLng, nearestLat, nearestLng) * 1000;
+    if (distMeters < minDistanceMeters) {
+      minDistanceMeters = distMeters;
+    }
+  }
+
+  return Math.round(minDistanceMeters);
+};
 
 export default function App() {
   // View & Auth State
@@ -245,6 +280,12 @@ export default function App() {
   const [showSummaryCard, setShowSummaryCard] = useState(false);
   const [showTrafficLegend, setShowTrafficLegend] = useState(false);
   const [showBottomDashboard, setShowBottomDashboard] = useState(true);
+
+  // Dynamic Auto-Rerouting (Off-Route Detection) State
+  const [offRouteDistanceMeters, setOffRouteDistanceMeters] = useState(0);
+  const [isOffRoute, setIsOffRoute] = useState(false);
+  const [rerouteCountdown, setRerouteCountdown] = useState(5);
+  const [isRerouteDismissed, setIsRerouteDismissed] = useState(false);
 
   // Modals State
   const [selectedStationModal, setSelectedStationModal] = useState(null);
@@ -556,6 +597,59 @@ export default function App() {
     }
   }, [distanceDrivenKm, routeData]);
 
+  // Dynamic Off-Route Detection Engine (200m off-route threshold)
+  useEffect(() => {
+    if (!isNavigating || !routeData?.coordinates?.length || isRerouteDismissed || !currentCarCoords) {
+      setIsOffRoute(false);
+      return;
+    }
+
+    const distMeters = getDistanceToRouteMeters(currentCarCoords, routeData.coordinates);
+    setOffRouteDistanceMeters(distMeters);
+
+    // If vehicle has drifted more than 200m off planned highway corridor
+    if (distMeters > 200) {
+      setIsOffRoute(true);
+    } else {
+      setIsOffRoute(false);
+      setRerouteCountdown(5);
+    }
+  }, [currentCarCoords, isNavigating, routeData, isRerouteDismissed]);
+
+  // Countdown timer for automatic rerouting
+  useEffect(() => {
+    let timer = null;
+    if (isOffRoute && rerouteCountdown > 0) {
+      timer = setInterval(() => {
+        setRerouteCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (isOffRoute && rerouteCountdown <= 0) {
+      triggerAutoReroute();
+    }
+    return () => clearInterval(timer);
+  }, [isOffRoute, rerouteCountdown]);
+
+  const triggerAutoReroute = () => {
+    setIsOffRoute(false);
+    setRerouteCountdown(5);
+
+    if ('speechSynthesis' in window) {
+      try {
+        const utter = new SpeechSynthesisUtterance('Off route detected. Recalculating highway directions now.');
+        utter.rate = 1.0;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {}
+    }
+
+    const currentPoint = {
+      lat: currentCarCoords[0],
+      lng: currentCarCoords[1],
+      displayName: `Reroute (${currentCarCoords[0].toFixed(3)}, ${currentCarCoords[1].toFixed(3)})`
+    };
+    setSourceLocation(currentPoint);
+    handlePlanRoute(currentPoint, destLocation);
+  };
+
   // Handle URL Query Params from Passenger QR Code scan on mobile
   useEffect(() => {
     try {
@@ -747,6 +841,53 @@ export default function App() {
 
         {/* Driver Fatigue Alert */}
         {showFatigueAlert && <FatigueAlert onClose={() => setShowFatigueAlert(false)} />}
+
+        {/* Dynamic Auto-Rerouting Off-Route Banner */}
+        {isOffRoute && (
+          <div 
+            className="fixed top-20 left-1/2 -translate-x-1/2 font-sans animate-in slide-in-from-top-3 duration-300 w-[92%] max-w-md"
+            style={{ zIndex: 9998 }}
+          >
+            <div className="bg-[#b06000] text-white p-3 rounded-2xl shadow-2xl border-2 border-white flex items-center justify-between gap-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-white text-amber-700 rounded-xl font-bold shrink-0 animate-bounce">
+                  <NavIcon className="w-5 h-5 fill-current" />
+                </div>
+                <div>
+                  <div className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                    <span>⚠️ Off Planned Highway</span>
+                    <span className="bg-black/30 px-1.5 py-0.2 rounded text-[10px]">
+                      {offRouteDistanceMeters}m away
+                    </span>
+                  </div>
+                  <div className="text-[11px] font-medium text-amber-100">
+                    Auto-recalculating corridor in <span className="font-bold underline text-white">{rerouteCountdown}s</span>...
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-1.5 shrink-0">
+                <button
+                  onClick={triggerAutoReroute}
+                  className="px-3 py-1.5 bg-white text-[#b06000] font-bold text-xs rounded-full shadow-sm hover:bg-amber-50 transition-all cursor-pointer"
+                >
+                  Reroute
+                </button>
+                <button
+                  onClick={() => {
+                    setIsRerouteDismissed(true);
+                    setIsOffRoute(false);
+                    setTimeout(() => setIsRerouteDismissed(false), 30000);
+                  }}
+                  className="p-1 text-white hover:bg-black/20 rounded-full cursor-pointer"
+                  title="Dismiss warning"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Turn Guidance Banner */}
         {showNavBanner && currentNavStep && (
@@ -990,6 +1131,8 @@ export default function App() {
       {/* Station Details Modal */}
       <StationModal
         station={selectedStationModal}
+        user={user}
+        token={token}
         onClose={() => setSelectedStationModal(null)}
       />
 
@@ -1001,6 +1144,7 @@ export default function App() {
           sourceName={sourceLocation?.displayName || 'Origin'}
           destName={destLocation?.displayName || 'Destination'}
           vehicleName={selectedVehicle.name}
+          waypoints={waypoints}
           onClose={() => setShowExportModal(false)}
         />
       )}

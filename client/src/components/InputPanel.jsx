@@ -24,6 +24,7 @@ import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiConfig';
 import { calculateTripCostAndSavings } from '../utils/costSavingsMath';
 import { INDIAN_CPO_NETWORKS } from '../services/openChargeMapService';
+import { fetchLiveWeather } from '../services/weatherService';
 
 export const INITIAL_EV_PRESETS = [
   { id: 'nexon', name: 'Tata Nexon EV Max', range: 437, battery: 40.5, plug: 'CCS2' },
@@ -169,6 +170,28 @@ export default function InputPanel({
   const [savedTrips, setSavedTrips] = useState([]);
   const [showSavedTrips, setShowSavedTrips] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Live Highway Weather State (Open-Meteo)
+  const [weatherData, setWeatherData] = useState(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+
+  useEffect(() => {
+    if (!sourceLocation?.lat || !sourceLocation?.lng) return;
+    let isMounted = true;
+    const loadWeather = async () => {
+      setIsLoadingWeather(true);
+      const w = await fetchLiveWeather(sourceLocation.lat, sourceLocation.lng);
+      if (isMounted) {
+        setWeatherData(w);
+        if (setAmbientTemp && w.temperature) {
+          setAmbientTemp(w.temperature);
+        }
+        setIsLoadingWeather(false);
+      }
+    };
+    loadWeather();
+    return () => { isMounted = false; };
+  }, [sourceLocation]);
 
   useEffect(() => {
     if (sourceLocation && sourceLocation.displayName) {
@@ -667,26 +690,74 @@ export default function InputPanel({
           </div>
         </div>
 
-        {/* Climate & Weather Impact */}
-        <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
-          <div className="text-[11px] font-bold text-[#5f6368] uppercase tracking-wider flex items-center gap-1.5">
-            <Thermometer className="w-3.5 h-3.5 text-[#5f6368]" /> Climate AC Impact
+        {/* Live Highway Weather & Climate Section */}
+        <div className="space-y-2 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-bold text-[#5f6368] uppercase tracking-wider flex items-center gap-1.5">
+              <Thermometer className="w-3.5 h-3.5 text-[#5f6368]" /> 
+              <span>Live Highway Weather</span>
+            </div>
+            <span className="text-[9px] text-[#1a73e8] font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              Open-Meteo Live
+            </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1">
-            {['Off', 'Normal AC', 'Max AC'].map((mode) => (
+          {weatherData ? (
+            <div className="bg-white p-2.5 rounded-lg border border-[#dadce0] flex items-center justify-between text-xs shadow-xs">
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">{weatherData.icon}</span>
+                <div>
+                  <div className="font-bold text-[#202124]">
+                    {weatherData.temperature}°C • {weatherData.label}
+                  </div>
+                  <div className="text-[10px] text-[#5f6368]">
+                    Wind {weatherData.windSpeed} km/h • Range Load: {weatherData.penaltyPercent > 0 ? `-${weatherData.penaltyPercent}%` : 'Optimal'}
+                  </div>
+                </div>
+              </div>
+
               <button
-                key={mode}
-                onClick={() => setAcMode(mode)}
-                className={`py-1 text-[10px] font-semibold rounded-md border transition-all ${
-                  acMode === mode
-                    ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-sm'
-                    : 'bg-white text-[#5f6368] border-[#dadce0] hover:bg-slate-50'
-                }`}
+                type="button"
+                onClick={async () => {
+                  if (sourceLocation?.lat) {
+                    setIsLoadingWeather(true);
+                    const w = await fetchLiveWeather(sourceLocation.lat, sourceLocation.lng);
+                    setWeatherData(w);
+                    if (setAmbientTemp && w.temperature) setAmbientTemp(w.temperature);
+                    setIsLoadingWeather(false);
+                  }
+                }}
+                className="text-[10px] text-[#1a73e8] hover:underline font-semibold cursor-pointer shrink-0 ml-1"
+                title="Refresh Live Weather"
               >
-                {mode}
+                {isLoadingWeather ? '...' : '↻ Refresh'}
               </button>
-            ))}
+            </div>
+          ) : (
+            <div className="text-[11px] text-[#5f6368] bg-white p-2 rounded-lg border border-[#dadce0]">
+              Detecting origin highway weather...
+            </div>
+          )}
+
+          {/* AC Setting Buttons */}
+          <div className="pt-0.5">
+            <div className="text-[10px] font-semibold text-[#5f6368] mb-1">Cabin AC Setting</div>
+            <div className="grid grid-cols-3 gap-1">
+              {['Off', 'Normal AC', 'Max AC'].map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setAcMode(mode)}
+                  className={`py-1 text-[10px] font-semibold rounded-md border transition-all cursor-pointer ${
+                    acMode === mode
+                      ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-sm'
+                      : 'bg-white text-[#5f6368] border-[#dadce0] hover:bg-slate-50'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

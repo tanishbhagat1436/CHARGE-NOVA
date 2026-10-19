@@ -19,14 +19,102 @@ import {
   Leaf, 
   ShieldCheck, 
   ChevronRight,
-  Car
+  Car,
+  Clock,
+  Navigation
 } from 'lucide-react';
 import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiConfig';
 import { calculateTripCostAndSavings } from '../utils/costSavingsMath';
 
+function BookingCard({ booking, onCancel }) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    return Math.max(0, Math.floor((new Date(booking.expiresAt) - new Date()) / 1000));
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const isExpired = timeLeft <= 0 || booking.status === 'Cancelled' || booking.status === 'Expired';
+
+  const handleNavigate = () => {
+    if (booking.coords && booking.coords.length === 2) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${booking.coords[0]},${booking.coords[1]}&travelmode=driving`, '_blank');
+    }
+  };
+
+  return (
+    <div className={`p-4 bg-white border rounded-xl space-y-3 shadow-xs transition-all ${
+      isExpired ? 'border-slate-200 opacity-60' : 'border-emerald-300 ring-2 ring-emerald-50'
+    }`}>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200">
+              {booking.operator || 'EV Network'}
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+              isExpired 
+                ? 'bg-slate-100 text-slate-500 border-slate-200' 
+                : 'bg-emerald-50 text-[#137333] border-emerald-200'
+            }`}>
+              {isExpired ? 'Expired / Released' : 'Held / Active Bay'}
+            </span>
+          </div>
+          <h4 className="text-sm font-bold text-[#202124] mt-1">{booking.stationName}</h4>
+          <p className="text-[11px] text-[#5f6368]">
+            {booking.powerKW || 60} kW DC Fast Charger • {booking.connector || 'CCS2'} • ₹{booking.rateINR || 19}/kWh
+          </p>
+        </div>
+
+        <div className="text-right">
+          <div className="text-[10px] text-[#5f6368] font-medium">Bay Passcode</div>
+          <div className="text-sm font-mono font-black text-[#1a73e8] tracking-wider">{booking.code}</div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-[#dadce0]">
+        <div className="flex items-center gap-1.5 text-xs font-semibold">
+          <Clock className={`w-3.5 h-3.5 ${isExpired ? 'text-slate-400' : 'text-[#1e8e3e]'}`} />
+          {isExpired ? (
+            <span className="text-slate-400">30-min window elapsed</span>
+          ) : (
+            <span className="text-[#137333] font-bold">Holds for next: {mins}m {secs < 10 ? '0' : ''}{secs}s</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleNavigate}
+            className="px-3 py-1 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+          >
+            <Navigation className="w-3 h-3" />
+            <span>Navigate</span>
+          </button>
+          {!isExpired && (
+            <button
+              onClick={() => onCancel(booking._id || booking.code)}
+              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-lg text-xs font-semibold cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AccountDashboardModal({ user, token, onClose, onLogout, onLoadTripOnMap, onOpenAuthModal }) {
+  const [activeTab, setActiveTab] = useState('trips'); // 'trips' | 'bookings'
   const [trips, setTrips] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTripIds, setSelectedTripIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,11 +123,55 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
   useEffect(() => {
     if (token && user) {
       fetchUserTrips();
+      fetchUserBookings();
     } else {
       setTrips([]);
+      setBookings([]);
       setIsLoading(false);
     }
   }, [token, user]);
+
+  const fetchUserBookings = async () => {
+    try {
+      if (token && user) {
+        const response = await axios.get(`${getApiBaseUrl()}/api/reservations/my-bookings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data?.bookings) {
+          setBookings(response.data.bookings);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Backend booking fetch notice:', e.message);
+    }
+    // Fallback to local storage
+    try {
+      const local = JSON.parse(localStorage.getItem('charge_nova_active_bookings') || '[]');
+      setBookings(local);
+    } catch (e) {
+      setBookings([]);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Cancel this 30-minute charging slot reservation?')) return;
+    try {
+      if (token && !String(bookingId).startsWith('local-')) {
+        await axios.delete(`${getApiBaseUrl()}/api/reservations/${bookingId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch (e) {}
+
+    // Update state and local storage
+    setBookings(prev => prev.map(b => (b._id === bookingId || b.code === bookingId) ? { ...b, status: 'Cancelled' } : b));
+    try {
+      const saved = JSON.parse(localStorage.getItem('charge_nova_active_bookings') || '[]');
+      const updated = saved.map(b => (b._id === bookingId || b.code === bookingId) ? { ...b, status: 'Cancelled' } : b);
+      localStorage.setItem('charge_nova_active_bookings', JSON.stringify(updated));
+    } catch (e) {}
+  };
 
   const fetchUserTrips = async () => {
     if (!token || !user) {
@@ -221,10 +353,81 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
           </div>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-[#dadce0] bg-[#f8f9fa] text-xs font-bold px-4">
+          <button
+            onClick={() => setActiveTab('trips')}
+            className={`py-2.5 px-4 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+              activeTab === 'trips'
+                ? 'text-[#1a73e8] border-[#1a73e8] bg-white'
+                : 'text-[#5f6368] border-transparent hover:text-[#202124]'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Saved Trips & Analytics ({trips.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`py-2.5 px-4 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+              activeTab === 'bookings'
+                ? 'text-[#1a73e8] border-[#1a73e8] bg-white'
+                : 'text-[#5f6368] border-transparent hover:text-[#202124]'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span>My Active Bookings / Reserved Slots ({bookings.filter(b => b.status === 'Active' && new Date(b.expiresAt) > new Date()).length})</span>
+          </button>
+        </div>
+
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           
-          {/* Lifetime Analytics Banner (4 Key SaaS Metrics) */}
+          {activeTab === 'bookings' ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-[#202124] flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span>My Active 30-Minute Slot Passes</span>
+                  </h4>
+                  <p className="text-xs text-[#5f6368]">
+                    Reserved charger bays with priority passcode held for your vehicle
+                  </p>
+                </div>
+                <button
+                  onClick={fetchUserBookings}
+                  className="text-xs text-[#1a73e8] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span>Refresh Passes</span>
+                </button>
+              </div>
+
+              {bookings.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {bookings.map((booking, idx) => (
+                    <BookingCard
+                      key={booking._id || booking.code || idx}
+                      booking={booking}
+                      onCancel={handleCancelBooking}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-[#f8f9fa] rounded-2xl border border-[#dadce0] space-y-2">
+                  <div className="w-12 h-12 mx-auto bg-amber-50 text-amber-600 rounded-full flex items-center justify-center border border-amber-200">
+                    <Zap className="w-6 h-6 fill-amber-500" />
+                  </div>
+                  <h5 className="font-bold text-xs text-[#202124]">No Active Charging Bay Bookings</h5>
+                  <p className="text-[11px] text-[#5f6368] max-w-sm mx-auto">
+                    Click any recommended station pin on your planned highway route and select <strong>"Reserve 30-Min Fast Slot Free"</strong> to hold your charging gun before arrival.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Lifetime Analytics Banner (4 Key SaaS Metrics) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             
             <div className="p-3.5 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
@@ -460,6 +663,8 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
             )}
 
           </div>
+          </>
+          )}
 
         </div>
 
