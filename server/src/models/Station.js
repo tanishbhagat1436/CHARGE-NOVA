@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const StationSchema = new mongoose.Schema({
-  openChargeMapId: { type: Number, unique: true },
+  openChargeMapId: { type: Number, unique: true, sparse: true },
   title: { type: String, required: true },
   operator: { type: String, default: 'Independent' },
   address: { type: String },

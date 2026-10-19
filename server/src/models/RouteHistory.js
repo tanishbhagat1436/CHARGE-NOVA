@@ -16,4 +16,6 @@ const RouteHistorySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+RouteHistorySchema.index({ userId: 1, createdAt: -1 });
+
 export default mongoose.model('RouteHistory', RouteHistorySchema);

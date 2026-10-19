@@ -67,8 +67,30 @@ export const calculateSmartHalts = async ({
       const socToGainPercent = Math.max(20, targetChargeSocPercent - arrivalSocPercent);
       const energyNeededKwh = (socToGainPercent / 100) * usableBatteryCapKwh;
       
+      // REALISTIC LITHIUM-ION CC/CV FAST CHARGING CURVE:
+      // Phase 1 (Constant Current, up to 70% SoC): Accepts ~92% of charger rated power
+      // Phase 2 (Constant Voltage Taper, 70% to 85% SoC): Power tapers to ~65% of rated power
       const chargePowerKw = selectedStation?.power || 60;
-      const chargeTimeMins = Math.round((energyNeededKwh / chargePowerKw) * 60) + 5;
+      
+      let ccKwh = 0;
+      let cvKwh = 0;
+      
+      if (arrivalSocPercent < 70) {
+        const ccSocGain = Math.min(70, targetChargeSocPercent) - arrivalSocPercent;
+        ccKwh = (ccSocGain / 100) * usableBatteryCapKwh;
+        if (targetChargeSocPercent > 70) {
+          const cvSocGain = targetChargeSocPercent - 70;
+          cvKwh = (cvSocGain / 100) * usableBatteryCapKwh;
+        }
+      } else {
+        const cvSocGain = Math.max(0, targetChargeSocPercent - arrivalSocPercent);
+        cvKwh = (cvSocGain / 100) * usableBatteryCapKwh;
+      }
+
+      const ccHours = ccKwh / (chargePowerKw * 0.92);
+      const cvHours = cvKwh / (chargePowerKw * 0.65);
+      const handshakeOverheadMins = 4;
+      const chargeTimeMins = Math.max(12, Math.round((ccHours + cvHours) * 60) + handshakeOverheadMins);
 
       // STRICT POLYLINE SNAPPING: Set lat & lng directly to point.lat and point.lng on the highway line!
       recommendedStops.push({

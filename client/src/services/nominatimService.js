@@ -1,37 +1,73 @@
-import axios from 'axios';
+// High-Performance In-Memory Geocoding Cache to avoid Nominatim 429 rate limits
+const geocodeCache = new Map();
+const reverseCache = new Map();
 
 /**
- * Geocode location query for Indian cities, towns, and highways using Nominatim (Free OpenStreetMap API)
+ * Geocode location query using Nominatim with in-memory caching and resilient fallbacks
  * @param {string} query 
  * @returns {Promise<Array<{lat: number, lng: number, displayName: string}>>}
  */
 export const searchLocation = async (query) => {
   if (!query || query.trim().length < 2) return [];
 
+  const cleanQuery = query.trim().toLowerCase();
+  if (geocodeCache.has(cleanQuery)) {
+    return geocodeCache.get(cleanQuery);
+  }
+
   try {
+    const isIndiaSpecific = !cleanQuery.includes(',') && !cleanQuery.includes('usa') && !cleanQuery.includes('uk') && !cleanQuery.includes('dubai');
+    const searchParam = isIndiaSpecific ? `${query}, India` : query;
+
     const response = await axios.get('https://nominatim.openstreetmap.org/search', {
       params: {
-        q: `${query}, India`,
+        q: searchParam,
         format: 'json',
         addressdetails: 1,
         limit: 5,
-        countrycodes: 'in'
+        ...(isIndiaSpecific ? { countrycodes: 'in' } : {})
       },
       headers: {
         'Accept-Language': 'en-US,en;q=0.9',
         'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
-      }
+      },
+      timeout: 3500
     });
 
-    return response.data.map((item) => ({
+    let data = response.data;
+
+    // Fallback to global query if country-scoped query returned nothing
+    if ((!data || data.length === 0) && isIndiaSpecific) {
+      const fallbackRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+        params: {
+          q: query,
+          format: 'json',
+          addressdetails: 1,
+          limit: 5
+        },
+        headers: {
+          'Accept-Language': 'en-US,en;q=0.9',
+          'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
+        },
+        timeout: 3500
+      });
+      data = fallbackRes.data || [];
+    }
+
+    const formatted = (data || []).map((item) => ({
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),
       displayName: item.display_name,
       city: item.address?.city || item.address?.town || item.address?.state_district || item.display_name.split(',')[0],
       state: item.address?.state || ''
     }));
+
+    if (geocodeCache.size > 150) geocodeCache.clear();
+    geocodeCache.set(cleanQuery, formatted);
+
+    return formatted;
   } catch (error) {
-    console.error('Nominatim Geocoding Error:', error);
+    console.warn('Nominatim Geocoding notice:', error.message);
     return [];
   }
 };
@@ -43,6 +79,11 @@ export const searchLocation = async (query) => {
  * @returns {Promise<{lat: number, lng: number, displayName: string}>}
  */
 export const reverseGeocode = async (lat, lng) => {
+  const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if (reverseCache.has(cacheKey)) {
+    return reverseCache.get(cacheKey);
+  }
+
   try {
     const response = await axios.get('https://nominatim.openstreetmap.org/reverse', {
       params: {
@@ -53,18 +94,24 @@ export const reverseGeocode = async (lat, lng) => {
       },
       headers: {
         'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
-      }
+      },
+      timeout: 3000
     });
 
     const addr = response.data?.address;
     const locationName = addr?.city || addr?.town || addr?.suburb || addr?.county || addr?.state || 'Your Current Location';
 
-    return {
+    const result = {
       lat,
       lng,
       displayName: response.data?.display_name || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
       city: locationName
     };
+
+    if (reverseCache.size > 150) reverseCache.clear();
+    reverseCache.set(cacheKey, result);
+
+    return result;
   } catch (error) {
     console.error('Reverse Geocoding Error:', error);
     return {

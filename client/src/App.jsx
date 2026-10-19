@@ -158,6 +158,16 @@ export default function App() {
   const [liveGpsHeading, setLiveGpsHeading] = useState(0);
   const prevGpsPosRef = useRef(null);
 
+  // Dual-Mode Driving Engine State (Virtual Simulator vs Hardware Device GPS)
+  const [navMode, setNavMode] = useState('simulator'); // 'simulator' or 'deviceGps'
+  const [simSpeedMultiplier, setSimSpeedMultiplier] = useState(5); // 1, 5, 15, 30
+  const [isSimPaused, setIsSimPaused] = useState(false);
+  const [simCoordIndex, setSimCoordIndex] = useState(0);
+  const [simDistanceKm, setSimDistanceKm] = useState(0);
+  const [simSpeedKmH, setSimSpeedKmH] = useState(76);
+  const [simHeading, setSimHeading] = useState(0);
+  const [simCoords, setSimCoords] = useState(null);
+
   // Driver Safety & Speed Camera Alert State
   const [activeSpeedCamera, setActiveSpeedCamera] = useState(null);
   const [showFatigueAlert, setShowFatigueAlert] = useState(false);
@@ -276,7 +286,10 @@ export default function App() {
     setCurrentStepIndex(0);
     setSelectedTurnStep(null);
     setRealTimeDistanceKm(0);
+    setSimCoordIndex(0);
+    setSimDistanceKm(0);
     setIsNavigating(false);
+    setIsSimPaused(false);
 
     try {
       const osrmResult = await getRouteFromOSRM(
@@ -285,6 +298,9 @@ export default function App() {
       );
 
       setRouteData(osrmResult);
+      if (osrmResult?.coordinates?.[0]) {
+        setSimCoords(osrmResult.coordinates[0]);
+      }
       const bounds = L.latLngBounds(osrmResult.coordinates);
       setMapBounds(bounds);
 
@@ -366,6 +382,14 @@ export default function App() {
     setShowNavBanner(true);
     setIs3dTilted(true);
     setAutoFollowCar(true);
+    setIsSimPaused(false);
+    if (simCoordIndex >= (routeData?.coordinates?.length || 1) - 1) {
+      setSimCoordIndex(0);
+      setSimDistanceKm(0);
+      if (routeData?.coordinates?.[0]) {
+        setSimCoords(routeData.coordinates[0]);
+      }
+    }
   };
 
   // Exit Live Navigation Action
@@ -373,17 +397,83 @@ export default function App() {
     setIsNavigating(false);
     setShowNavBanner(false);
     setIs3dTilted(false);
+    setIsSimPaused(false);
     if (routeData) {
       setMapBounds(L.latLngBounds(routeData.coordinates));
     }
   };
 
-  // Derive Current Live GPS Position & Battery SOC
+  // Reset Virtual Driving Simulation
+  const handleResetSimulation = () => {
+    setSimCoordIndex(0);
+    setSimDistanceKm(0);
+    setRealTimeDistanceKm(0);
+    setIsSimPaused(false);
+    if (routeData?.coordinates?.[0]) {
+      setSimCoords(routeData.coordinates[0]);
+    }
+  };
+
+  // Virtual Simulator Autonomous Driving Loop
+  useEffect(() => {
+    if (!isNavigating || navMode !== 'simulator' || !routeData?.coordinates?.length || isSimPaused) {
+      return;
+    }
+
+    const coords = routeData.coordinates;
+    const intervalMs = 200;
+
+    const timer = setInterval(() => {
+      setSimCoordIndex((prevIdx) => {
+        if (prevIdx >= coords.length - 1) {
+          setIsSimPaused(true);
+          setSimSpeedKmH(0);
+          return prevIdx;
+        }
+
+        const stepAdvancement = Math.max(1, Math.round(simSpeedMultiplier * 1.5));
+        const nextIdx = Math.min(coords.length - 1, prevIdx + stepAdvancement);
+
+        const p1 = coords[prevIdx];
+        const p2 = coords[nextIdx];
+
+        const segmentKm = calculateDistanceKm(p1[0], p1[1], p2[0], p2[1]);
+        setSimDistanceKm((prev) => Math.round((prev + segmentKm) * 100) / 100);
+
+        // Heading calculation
+        const dy = p2[0] - p1[0];
+        const dx = (p2[1] - p1[1]) * Math.cos((p1[0] * Math.PI) / 180);
+        const heading = (Math.atan2(dx, dy) * 180) / Math.PI;
+        setSimHeading(heading);
+
+        // Dynamic highway cruise speed (70 - 92 km/h)
+        const cruiseSpeed = Math.floor(72 + (nextIdx % 18));
+        setSimSpeedKmH(cruiseSpeed);
+        setSimCoords(p2);
+
+        // Check speed cameras on simulated coordinate
+        const camAlert = checkSpeedCameraAlert(p2[0], p2[1]);
+        setActiveSpeedCamera(camAlert);
+
+        return nextIdx;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [isNavigating, navMode, routeData, isSimPaused, simSpeedMultiplier]);
+
+  // Derive Current Live Telemetry & Battery SOC
+  const isVirtualSim = isNavigating && navMode === 'simulator';
   const currentCarCoords = isNavigating
-    ? (liveDeviceCoords || routeData?.coordinates?.[0] || [sourceLocation.lat, sourceLocation.lng])
+    ? (isVirtualSim 
+        ? (simCoords || routeData?.coordinates?.[0] || [sourceLocation.lat, sourceLocation.lng]) 
+        : (liveDeviceCoords || routeData?.coordinates?.[0] || [sourceLocation.lat, sourceLocation.lng]))
     : (routeData?.coordinates?.[0] || [sourceLocation.lat, sourceLocation.lng]);
 
-  const distanceDrivenKm = realTimeDistanceKm;
+  const distanceDrivenKm = isVirtualSim ? simDistanceKm : realTimeDistanceKm;
+  const currentSpeedValue = isNavigating ? (isVirtualSim ? simSpeedKmH : liveGpsSpeed) : 0;
+  const currentHeadingValue = isNavigating ? (isVirtualSim ? simHeading : liveGpsHeading) : 0;
+
   const consumedSocPercent = (distanceDrivenKm / selectedVehicle.range) * 100;
   const currentSoc = Math.max(0, Math.round(((currentRange / selectedVehicle.range) * 100) - consumedSocPercent));
 
@@ -587,7 +677,7 @@ export default function App() {
           <NavigationBanner
             currentStep={selectedTurnStep || currentNavStep}
             nextStepDistanceKm={nextStepDistanceKm}
-            currentSpeed={liveGpsSpeed}
+            currentSpeed={currentSpeedValue}
             vehicleName={selectedVehicle.name}
             isSimulating={true}
             onClose={() => setShowNavBanner(false)}
@@ -629,7 +719,14 @@ export default function App() {
             autoFollowCar={autoFollowCar}
             setAutoFollowCar={setAutoFollowCar}
             nextStop={nextChargingStop}
-            liveSpeed={liveGpsSpeed}
+            liveSpeed={currentSpeedValue}
+            navMode={navMode}
+            setNavMode={setNavMode}
+            simSpeedMultiplier={simSpeedMultiplier}
+            setSimSpeedMultiplier={setSimSpeedMultiplier}
+            isSimPaused={isSimPaused}
+            setIsSimPaused={setIsSimPaused}
+            onResetSimulation={handleResetSimulation}
           />
         )}
 
@@ -747,11 +844,13 @@ export default function App() {
 
           {/* EV Car Marker */}
           {currentCarCoords && (
-            <Marker position={currentCarCoords} icon={createCarIcon(liveGpsHeading)} zIndexOffset={1000}>
+            <Marker position={currentCarCoords} icon={createCarIcon(currentHeadingValue)} zIndexOffset={1000}>
               <Popup>
-                <div className="font-bold text-xs text-emerald-400">
+                <div className="font-bold text-xs text-[#1e8e3e]">
                   {selectedVehicle.name} • {currentSoc}% Battery • {distanceDrivenKm} km driven
-                  <div className="text-blue-400 text-[10px]">📡 Real Hardware GPS Motion Active</div>
+                  <div className="text-[#1a73e8] font-semibold text-[10px] mt-0.5">
+                    {isVirtualSim ? '🚗 Virtual Highway Simulation Active' : '📡 Real Hardware GPS Motion Active'}
+                  </div>
                 </div>
               </Popup>
             </Marker>
