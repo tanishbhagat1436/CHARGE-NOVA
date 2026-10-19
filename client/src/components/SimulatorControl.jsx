@@ -19,20 +19,20 @@ export default function SimulatorControl({
       className="fixed bottom-6 left-1/2 -translate-x-1/2 font-sans max-w-xl w-full px-4 animate-in slide-in-from-bottom-4 duration-300"
       style={{ zIndex: 9990 }}
     >
-      <div className="bg-slate-900 border border-slate-700 p-3.5 rounded-2xl shadow-2xl space-y-2.5">
+      <div className="bg-white border border-[#dadce0] p-3.5 rounded-2xl shadow-xl space-y-2.5 text-[#202124]">
         
         {/* Top Status Line */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div className="flex items-center justify-between border-b border-[#dadce0] pb-2.5">
           
-          <div className="flex items-center space-x-2">
-            <div className={`p-1.5 rounded-xl border ${isNavigating ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700' : 'bg-slate-950 text-slate-400 border-slate-800'}`}>
+          <div className="flex items-center space-x-2.5">
+            <div className={`p-1.5 rounded-xl border ${isNavigating ? 'bg-emerald-50 text-[#1e8e3e] border-emerald-200' : 'bg-blue-50 text-[#1a73e8] border-blue-200'}`}>
               <Navigation className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#5f6368]">
                 {isNavigating ? 'LIVE NAVIGATION ACTIVE' : 'ROUTE PLAN OVERVIEW'}
               </div>
-              <div className="text-xs font-bold text-slate-100 truncate max-w-[200px]">
+              <div className="text-xs font-bold text-[#202124] truncate max-w-[200px]">
                 {vehicleName}
               </div>
             </div>
@@ -42,15 +42,15 @@ export default function SimulatorControl({
           {!isNavigating ? (
             <button
               onClick={onStartNavigation}
-              className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-slate-100 font-bold text-xs rounded-xl shadow-md border border-emerald-700 transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
+              className="px-4 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold text-xs rounded-full shadow-sm hover:shadow transition-all flex items-center space-x-1.5 cursor-pointer active:scale-95"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>START LIVE NAVIGATION</span>
+              <span>START NAVIGATION</span>
             </button>
           ) : (
             <button
               onClick={onExitNavigation}
-              className="px-3.5 py-1.5 bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-700 font-bold text-xs rounded-xl transition-all flex items-center space-x-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 font-semibold text-xs rounded-full transition-all flex items-center space-x-1.5 cursor-pointer"
             >
               <Square className="w-3.5 h-3.5 fill-current" />
               <span>EXIT NAV</span>
@@ -63,31 +63,31 @@ export default function SimulatorControl({
         <div className="grid grid-cols-3 gap-2 text-center">
           
           {/* Speedometer */}
-          <div className="bg-slate-950 p-2 rounded-xl border border-slate-800">
-            <div className="text-[9px] font-bold text-slate-400 uppercase flex items-center justify-center gap-1">
-              <Gauge className="w-3 h-3 text-emerald-400" /> Speed
+          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
+            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
+              <Gauge className="w-3 h-3 text-[#1e8e3e]" /> Speed
             </div>
-            <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
-              {liveSpeed} <span className="text-[9px] font-normal text-slate-400">km/h</span>
+            <div className="text-base font-bold text-[#1e8e3e] font-mono mt-0.5">
+              {liveSpeed} <span className="text-[9px] font-normal text-[#5f6368]">km/h</span>
             </div>
           </div>
 
           {/* Odometer */}
-          <div className="bg-slate-950 p-2 rounded-xl border border-slate-800">
-            <div className="text-[9px] font-bold text-slate-400 uppercase flex items-center justify-center gap-1">
-              <Compass className="w-3 h-3 text-blue-400" /> Distance
+          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
+            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
+              <Compass className="w-3 h-3 text-[#1a73e8]" /> Distance
             </div>
-            <div className="text-base font-bold text-blue-400 font-mono mt-0.5">
-              {currentDistance} <span className="text-[9px] font-normal text-slate-400">/ {totalDistance} km</span>
+            <div className="text-base font-bold text-[#1a73e8] font-mono mt-0.5">
+              {currentDistance} <span className="text-[9px] font-normal text-[#5f6368]">/ {totalDistance} km</span>
             </div>
           </div>
 
           {/* Battery SOC */}
-          <div className="bg-slate-950 p-2 rounded-xl border border-slate-800">
-            <div className="text-[9px] font-bold text-slate-400 uppercase flex items-center justify-center gap-1">
-              <BatteryCharging className="w-3 h-3 text-emerald-400" /> Battery SOC
+          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
+            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
+              <BatteryCharging className="w-3 h-3 text-[#1e8e3e]" /> Battery SOC
             </div>
-            <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
+            <div className="text-base font-bold text-[#1e8e3e] font-mono mt-0.5">
               {currentSoc}%
             </div>
           </div>

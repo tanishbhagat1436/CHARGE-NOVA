@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, LogOut, Database, Zap, MapPin, Gauge, DollarSign, BarChart3, Layers, CheckSquare, Square, Calendar } from 'lucide-react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiConfig';
 
 export default function AccountDashboardModal({ user, token, onClose, onLogout, onLoadTripOnMap }) {
   const [trips, setTrips] = useState([]);
@@ -14,7 +15,7 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
   const fetchUserTrips = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/routes/history', {
+      const response = await axios.get(`${getApiBaseUrl()}/api/routes/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data?.data) {
@@ -44,34 +45,33 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
   // Lifetime metrics calculation
   const totalDistanceKm = trips.reduce((acc, t) => acc + (t.distanceKm || 0), 0);
   const totalSavedCostINR = trips.reduce((acc, t) => acc + (t.savedCostINR || Math.round((t.distanceKm / 14) * 105 - (t.distanceKm / 437) * 40.5 * 10)), 0);
-  const totalStops = trips.reduce((acc, t) => acc + (t.stopsCount || 1), 0);
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 font-sans"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
       style={{ zIndex: 99999 }}
     >
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col relative">
+      <div className="bg-white border border-[#dadce0] w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative text-[#202124]">
         
         {/* Header Bar */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+        <div className="p-4 border-b border-[#dadce0] bg-white flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
-              <User className="w-6 h-6" />
+            <div className="p-2 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200">
+              <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-lg text-slate-100 flex items-center gap-2">
+              <h3 className="font-bold text-base text-[#202124] flex items-center gap-2">
                 <span>{user?.name || 'Account Dashboard'}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">ACCOUNT</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200 font-semibold">ACCOUNT</span>
               </h3>
-              <p className="text-xs text-slate-400 font-medium">{user?.email}</p>
+              <p className="text-xs text-[#5f6368]">{user?.email}</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
             <button
               onClick={onLogout}
-              className="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Log Out</span>
@@ -79,7 +79,7 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
 
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition-colors"
+              className="p-1.5 text-[#5f6368] hover:text-[#202124] hover:bg-slate-100 rounded-full transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -87,84 +87,84 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
           
           {/* Lifetime Analytics Banner */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center space-x-3">
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                <Gauge className="w-6 h-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
+              <div className="p-2.5 bg-blue-50 text-[#1a73e8] rounded-xl">
+                <Gauge className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Distance Planned</div>
-                <div className="text-xl font-black text-slate-100 font-mono">{totalDistanceKm} km</div>
+                <div className="text-[10px] uppercase font-bold text-[#5f6368]">Total Distance</div>
+                <div className="text-xl font-bold text-[#1a73e8] font-mono">{totalDistanceKm} km</div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center space-x-3">
-              <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl">
-                <DollarSign className="w-6 h-6" />
+            <div className="p-4 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
+              <div className="p-2.5 bg-emerald-50 text-[#1e8e3e] rounded-xl">
+                <DollarSign className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Total Fuel Money Saved</div>
-                <div className="text-xl font-black text-emerald-400 font-mono">₹{totalSavedCostINR.toLocaleString()}</div>
+                <div className="text-[10px] uppercase font-bold text-[#5f6368]">Fuel Money Saved</div>
+                <div className="text-xl font-bold text-[#1e8e3e] font-mono">₹{totalSavedCostINR.toLocaleString()}</div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center space-x-3">
-              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
-                <Zap className="w-6 h-6" />
+            <div className="p-4 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
+              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+                <Zap className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold text-slate-400">Saved Trips Stored</div>
-                <div className="text-xl font-black text-indigo-400 font-mono">{trips.length} Trips</div>
+                <div className="text-[10px] uppercase font-bold text-[#5f6368]">Saved Trips</div>
+                <div className="text-xl font-bold text-[#202124] font-mono">{trips.length} Trips</div>
               </div>
             </div>
           </div>
 
           {/* TRIP COMPARISON SECTION */}
           {selectedTrips.length > 0 && (
-            <div className="bg-slate-950 p-5 rounded-2xl border border-emerald-500/40 space-y-4 animate-in fade-in duration-300">
+            <div className="bg-[#f8f9fa] p-4 rounded-xl border border-[#dadce0] space-y-3 animate-in fade-in duration-300">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <BarChart3 className="w-5 h-5 text-emerald-400" />
-                  <h4 className="font-bold text-sm text-slate-100">Side-by-Side Trip Comparison ({selectedTrips.length} Selected)</h4>
+                  <BarChart3 className="w-4 h-4 text-[#1a73e8]" />
+                  <h4 className="font-bold text-xs text-[#202124]">Side-by-Side Trip Comparison ({selectedTrips.length} Selected)</h4>
                 </div>
                 <button
                   onClick={() => setSelectedTripIds([])}
-                  className="text-xs text-slate-400 hover:text-white"
+                  className="text-xs text-[#1a73e8] hover:underline font-semibold"
                 >
                   Clear Selection
                 </button>
               </div>
 
               {/* Side-by-Side Comparison Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {selectedTrips.map((t, idx) => {
                   const estPetrolCost = Math.round((t.distanceKm / 14) * 105);
                   const estEvCost = Math.round((t.distanceKm / 437) * 40.5 * 10);
                   const netSavings = Math.max(0, estPetrolCost - estEvCost);
 
                   return (
-                    <div key={t._id || idx} className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2 relative">
-                      <div className="text-xs font-extrabold text-emerald-400 truncate">{t.title || `${t.sourceName} ➔ ${t.destName}`}</div>
-                      <div className="text-[11px] text-slate-400 font-medium">{t.vehicleName || 'Tata Nexon EV Max'}</div>
-                      <div className="border-t border-slate-800 pt-2 space-y-1 text-xs">
-                        <div className="flex justify-between text-slate-300">
+                    <div key={t._id || idx} className="p-3.5 bg-white border border-[#dadce0] rounded-xl space-y-2 shadow-sm">
+                      <div className="text-xs font-bold text-[#1a73e8] truncate">{t.title || `${t.sourceName} ➔ ${t.destName}`}</div>
+                      <div className="text-[11px] text-[#5f6368] font-medium">{t.vehicleName || 'Tata Nexon EV Max'}</div>
+                      <div className="border-t border-[#dadce0] pt-2 space-y-1 text-xs">
+                        <div className="flex justify-between text-[#5f6368]">
                           <span>Distance:</span>
-                          <span className="font-mono font-bold">{t.distanceKm} km</span>
+                          <span className="font-mono font-bold text-[#202124]">{t.distanceKm} km</span>
                         </div>
-                        <div className="flex justify-between text-slate-300">
+                        <div className="flex justify-between text-[#5f6368]">
                           <span>Charging Cost:</span>
-                          <span className="font-mono font-bold text-teal-400">₹{estEvCost}</span>
+                          <span className="font-mono font-bold text-[#1e8e3e]">₹{estEvCost}</span>
                         </div>
-                        <div className="flex justify-between text-slate-300">
+                        <div className="flex justify-between text-[#5f6368]">
                           <span>Petrol Cost:</span>
-                          <span className="font-mono font-bold text-rose-400">₹{estPetrolCost}</span>
+                          <span className="font-mono font-bold text-[#d93025]">₹{estPetrolCost}</span>
                         </div>
-                        <div className="flex justify-between text-slate-100 font-bold pt-1 border-t border-slate-800/80">
+                        <div className="flex justify-between text-[#202124] font-bold pt-1 border-t border-[#dadce0]">
                           <span>Net Savings:</span>
-                          <span className="font-mono text-emerald-400">₹{netSavings}</span>
+                          <span className="font-mono text-[#1e8e3e]">₹{netSavings}</span>
                         </div>
                       </div>
 
@@ -173,9 +173,9 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
                           onLoadTripOnMap({ lat: t.sourceCoords[0], lng: t.sourceCoords[1], displayName: t.sourceName }, { lat: t.destCoords[0], lng: t.destCoords[1], displayName: t.destName });
                           onClose();
                         }}
-                        className="w-full py-1.5 mt-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-[11px] font-bold transition-all text-center"
+                        className="w-full py-1.5 mt-2 bg-blue-50 hover:bg-blue-100 text-[#1a73e8] border border-blue-200 rounded-lg text-[11px] font-semibold transition-all text-center"
                       >
-                        Load Corridor on Map ➔
+                        Load on Map ➔
                       </button>
                     </div>
                   );
@@ -185,19 +185,19 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
           )}
 
           {/* PAST TRIPS TABLE */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex justify-between items-center">
-              <h4 className="font-bold text-sm text-slate-200 flex items-center gap-2">
-                <Database className="w-4 h-4 text-emerald-400" />
-                <span>Your Saved Past Trips in MongoDB</span>
+              <h4 className="font-bold text-xs text-[#202124] flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-[#1a73e8]" />
+                <span>Saved Past Trips (MongoDB)</span>
               </h4>
-              <span className="text-[11px] text-slate-400">Check boxes to compare trips</span>
+              <span className="text-[11px] text-[#5f6368]">Select checkboxes to compare</span>
             </div>
 
             {isLoading ? (
-              <div className="p-8 text-center text-xs text-slate-400">Loading saved trips...</div>
+              <div className="p-6 text-center text-xs text-[#5f6368]">Loading saved trips...</div>
             ) : trips.length > 0 ? (
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800/80">
+              <div className="bg-white border border-[#dadce0] rounded-xl overflow-hidden divide-y divide-[#dadce0]">
                 {trips.map((t) => {
                   const isChecked = selectedTripIds.includes(t._id);
                   const estEvCost = Math.round((t.distanceKm / 437) * 40.5 * 10);
@@ -205,23 +205,23 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
                   const netSavings = Math.max(0, estPetrolCost - estEvCost);
 
                   return (
-                    <div key={t._id} className="p-4 hover:bg-slate-900/60 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div key={t._id} className="p-3 hover:bg-[#f8f9fa] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       
                       <div className="flex items-center space-x-3">
                         <button
                           type="button"
                           onClick={() => toggleTripSelection(t._id)}
-                          className="text-emerald-400 hover:text-emerald-300"
+                          className="text-[#1a73e8]"
                         >
-                          {isChecked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-slate-600" />}
+                          {isChecked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-slate-400" />}
                         </button>
 
                         <div>
-                          <div className="font-bold text-xs text-slate-100">{t.title || `${t.sourceName} ➔ ${t.destName}`}</div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <div className="font-bold text-xs text-[#202124]">{t.title || `${t.sourceName} ➔ ${t.destName}`}</div>
+                          <div className="text-[11px] text-[#5f6368] flex items-center gap-2 mt-0.5">
                             <span>{t.vehicleName || 'EV Vehicle'}</span>
                             <span>•</span>
-                            <span className="font-mono text-emerald-400 font-bold">{t.distanceKm} km</span>
+                            <span className="font-mono text-[#1a73e8] font-semibold">{t.distanceKm} km</span>
                             <span>•</span>
                             <span>{new Date(t.createdAt).toLocaleDateString()}</span>
                           </div>
@@ -230,8 +230,8 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
 
                       <div className="flex items-center space-x-3 shrink-0">
                         <div className="text-right">
-                          <div className="text-xs font-mono font-bold text-emerald-400">₹{netSavings} Saved</div>
-                          <div className="text-[10px] text-slate-500">EV Cost: ₹{estEvCost}</div>
+                          <div className="text-xs font-mono font-bold text-[#1e8e3e]">₹{netSavings} Saved</div>
+                          <div className="text-[10px] text-[#5f6368]">EV Cost: ₹{estEvCost}</div>
                         </div>
 
                         <button
@@ -242,7 +242,7 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
                             );
                             onClose();
                           }}
-                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 rounded-xl text-xs font-bold transition-all"
+                          className="px-3 py-1 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] rounded-lg text-xs font-semibold transition-all shadow-sm"
                         >
                           View Map
                         </button>
@@ -253,8 +253,8 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
                 })}
               </div>
             ) : (
-              <div className="p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-500">
-                No trips saved to your account yet. Calculate a route and click <strong>"Save Mongo"</strong> in the planner!
+              <div className="p-6 text-center bg-[#f8f9fa] rounded-xl border border-[#dadce0] text-xs text-[#5f6368]">
+                No trips saved to your account yet. Calculate a route and click <strong>"Save Trip"</strong> in the planner!
               </div>
             )}
 

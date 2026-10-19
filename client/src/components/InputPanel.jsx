@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { searchLocation, reverseGeocode, getBestUserLocation } from '../services/nominatimService';
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiConfig';
 
 export const INITIAL_EV_PRESETS = [
   { id: 'nexon', name: 'Tata Nexon EV Max', range: 437, battery: 40.5, plug: 'CCS2' },
@@ -89,7 +90,7 @@ export default function InputPanel({
   const fetchSavedTrips = async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.get('http://localhost:5000/api/routes/history', { headers });
+      const response = await axios.get(`${getApiBaseUrl()}/api/routes/history`, { headers });
       if (response.data?.data) {
         setSavedTrips(response.data.data);
       }
@@ -110,7 +111,7 @@ export default function InputPanel({
 
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      await axios.post('http://localhost:5000/api/routes/save', {
+      await axios.post(`${getApiBaseUrl()}/api/routes/save`, {
         title: `${sourceLocation.city || 'Origin'} to ${destLocation.city || 'Destination'} Corridor`,
         sourceName: sourceLocation.displayName,
         destName: destLocation.displayName,
@@ -177,19 +178,19 @@ export default function InputPanel({
   };
 
   return (
-    <aside className="w-full md:w-[420px] h-full bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-xl relative font-sans">
+    <aside className="w-full md:w-[400px] h-full bg-white border-r border-[#dadce0] flex flex-col z-20 shadow-md relative font-sans text-[#202124]">
       
-      {/* Header */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+      {/* Header - Google Maps Style */}
+      <div className="p-3.5 border-b border-[#dadce0] bg-white flex items-center justify-between">
         <div className="flex items-center space-x-2.5 cursor-pointer" onClick={onReturnToLanding}>
-          <div className="p-2 bg-emerald-800 text-slate-100 rounded-xl border border-emerald-700 font-bold">
-            <Zap className="w-5 h-5 fill-current" />
+          <div className="p-2 bg-[#1a73e8] text-white rounded-xl shadow-sm font-bold">
+            <Zap className="w-4 h-4 fill-current" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-100">
+            <h1 className="text-base font-bold tracking-tight text-[#202124]">
               Charge Nova
             </h1>
-            <p className="text-[10px] text-slate-400 font-medium">EV Highway Planner</p>
+            <p className="text-[10px] text-[#5f6368] font-medium">EV Highway Directions</p>
           </div>
         </div>
         
@@ -197,7 +198,7 @@ export default function InputPanel({
           {user ? (
             <button
               onClick={onOpenDashboard}
-              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition-all text-xs font-bold flex items-center gap-1"
+              className="px-2.5 py-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#1a73e8] rounded-full border border-[#dadce0] transition-all text-xs font-semibold flex items-center gap-1 shadow-sm"
               title="Account Dashboard & Trip Analytics"
             >
               <User className="w-3.5 h-3.5" />
@@ -206,25 +207,25 @@ export default function InputPanel({
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 transition-all text-xs font-bold flex items-center gap-1"
+              className="px-2.5 py-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] rounded-full border border-[#dadce0] transition-all text-xs font-medium flex items-center gap-1 shadow-sm"
               title="Sign In / Register Account"
             >
-              <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+              <LogIn className="w-3.5 h-3.5 text-[#1a73e8]" />
               <span>Sign In</span>
             </button>
           )}
 
           <button
             onClick={onOpenSosModal}
-            className="p-2 bg-rose-900/30 hover:bg-rose-900/50 text-rose-300 rounded-xl border border-rose-800 transition-all text-xs font-bold"
+            className="p-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] rounded-full border border-red-200 transition-all text-xs font-bold"
             title="24x7 EV Emergency Helpline"
           >
-            <ShieldAlert className="w-4 h-4 text-rose-400" />
+            <ShieldAlert className="w-4 h-4 text-[#d93025]" />
           </button>
 
           <button
             onClick={() => setShowSavedTrips(!showSavedTrips)}
-            className="p-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition-all text-xs font-bold"
+            className="p-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#1a73e8] rounded-full border border-[#dadce0] transition-all text-xs font-semibold"
             title="View MongoDB Saved Trips"
           >
             <Database className="w-4 h-4" />
@@ -233,14 +234,14 @@ export default function InputPanel({
       </div>
 
       {/* Form Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
         
         {/* Saved Trips Drawer */}
         {showSavedTrips && (
-          <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2 animate-in fade-in duration-200">
-            <div className="flex justify-between items-center text-xs font-bold text-slate-200">
-              <span className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-emerald-400" /> Saved MongoDB Trips</span>
-              <button onClick={() => setShowSavedTrips(false)} className="text-slate-400 hover:text-white">✕</button>
+          <div className="bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0] space-y-2 animate-in fade-in duration-200 shadow-sm">
+            <div className="flex justify-between items-center text-xs font-bold text-[#202124]">
+              <span className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-[#1a73e8]" /> Saved MongoDB Trips</span>
+              <button onClick={() => setShowSavedTrips(false)} className="text-[#5f6368] hover:text-[#202124]">✕</button>
             </div>
             {savedTrips.length > 0 ? (
               <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
@@ -257,37 +258,37 @@ export default function InputPanel({
                         onSelectSavedTrip(src, dst);
                       }
                     }}
-                    className="w-full text-left p-2 bg-slate-900 hover:bg-slate-800 rounded-xl text-[11px] flex justify-between items-center text-slate-200 border border-slate-800"
+                    className="w-full text-left p-2 bg-white hover:bg-blue-50 rounded-lg text-[11px] flex justify-between items-center text-[#202124] border border-[#dadce0]"
                   >
-                    <span className="truncate font-semibold">{t.title || `${t.sourceName} ➔ ${t.destName}`}</span>
-                    <span className="text-emerald-400 font-mono font-bold shrink-0">{t.distanceKm} km</span>
+                    <span className="truncate font-medium">{t.title || `${t.sourceName} ➔ ${t.destName}`}</span>
+                    <span className="text-[#1a73e8] font-mono font-bold shrink-0">{t.distanceKm} km</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-[11px] text-slate-500">No saved trips yet.</div>
+              <div className="text-[11px] text-[#5f6368]">No saved trips yet.</div>
             )}
           </div>
         )}
 
         {/* EV Model Preset */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-300 uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><Car className="w-3.5 h-3.5 text-emerald-400" /> Select EV Model</span>
+        <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
+          <div className="flex items-center justify-between text-xs font-bold text-[#5f6368] uppercase tracking-wider">
+            <span className="flex items-center gap-1.5"><Car className="w-3.5 h-3.5 text-[#1a73e8]" /> EV Vehicle</span>
             <div className="flex items-center space-x-1">
               <button
                 onClick={onOpenBatteryHealthModal}
-                className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800"
+                className="text-[10px] text-[#1a73e8] hover:underline font-semibold bg-white px-2 py-0.5 rounded border border-[#dadce0]"
                 title="View Battery Health (SOH) Degradation"
               >
                 Battery Health
               </button>
               <button
                 onClick={onOpenCustomVehicleModal}
-                className="text-[10px] text-slate-300 hover:text-white font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800"
+                className="text-[10px] text-[#202124] hover:text-[#1a73e8] font-semibold bg-white px-2 py-0.5 rounded border border-[#dadce0]"
                 title="Add Custom EV Model"
               >
-                + Custom EV
+                + Custom
               </button>
             </div>
           </div>
@@ -295,34 +296,36 @@ export default function InputPanel({
           <select
             value={selectedVehicle.id}
             onChange={handleVehicleChange}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 focus:outline-none focus:border-slate-600 cursor-pointer"
+            className="w-full bg-white border border-[#dadce0] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#202124] focus:outline-none focus:border-[#1a73e8] cursor-pointer"
           >
             {evPresetsList.map((preset) => (
               <option key={preset.id} value={preset.id}>
-                {preset.name} ({preset.range} km range • {preset.battery} kWh)
+                {preset.name} ({preset.range} km • {preset.battery} kWh)
               </option>
             ))}
           </select>
         </div>
 
-        {/* Source & Destination Search */}
-        <div className="space-y-2.5 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+        {/* Source & Destination Search - Classic Directions Style */}
+        <div className="space-y-2 bg-[#f8f9fa] p-3.5 rounded-xl border border-[#dadce0]">
+          
+          {/* Starting Location */}
           <div className="space-y-1 relative">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Starting Location
+              <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#1e8e3e]" /> Origin
               </label>
               
               <button
                 onClick={handleFetchCurrentLocation}
                 disabled={isLocatingUser}
-                className="text-[10px] font-bold text-slate-300 hover:text-white flex items-center gap-1 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800"
+                className="text-[10px] font-semibold text-[#1a73e8] hover:underline flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-[#dadce0]"
               >
                 {isLocatingUser ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <>
-                    <Crosshair className="w-3 h-3 text-emerald-400" />
+                    <Crosshair className="w-3 h-3 text-[#1a73e8]" />
                     <span>My Location</span>
                   </>
                 )}
@@ -337,18 +340,18 @@ export default function InputPanel({
                   setSourceQuery(e.target.value);
                   setSourceLocation(null);
                 }}
-                placeholder="Search Indian city or use live GPS"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-3 pr-8 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                placeholder="Choose starting point or live GPS"
+                className="w-full bg-white border border-[#dadce0] rounded-lg pl-3 pr-8 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
               />
               {isSearchingSource ? (
-                <Loader2 className="w-3.5 h-3.5 text-emerald-400 animate-spin absolute right-2.5 top-2.5" />
+                <Loader2 className="w-3.5 h-3.5 text-[#1a73e8] animate-spin absolute right-2.5 top-2.5" />
               ) : (
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-[#5f6368] absolute right-2.5 top-2.5" />
               )}
             </div>
 
             {sourceSuggestions.length > 0 && !sourceLocation && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-slate-800">
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#dadce0] rounded-xl shadow-xl max-h-40 overflow-y-auto z-30 divide-y divide-[#dadce0]">
                 {sourceSuggestions.map((item, idx) => (
                   <button
                     key={idx}
@@ -361,9 +364,9 @@ export default function InputPanel({
                         onSelectSourceLocation(loc);
                       }
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 flex items-start space-x-1.5"
+                    className="w-full text-left px-2.5 py-2 text-[11px] text-[#202124] hover:bg-slate-50 flex items-start space-x-2"
                   >
-                    <MapPin className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                    <MapPin className="w-3 h-3 text-[#1e8e3e] mt-0.5 shrink-0" />
                     <span className="truncate">{item.displayName}</span>
                   </button>
                 ))}
@@ -371,9 +374,10 @@ export default function InputPanel({
             )}
           </div>
 
+          {/* Destination */}
           <div className="space-y-1 relative">
-            <label className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-              <Navigation className="w-3.5 h-3.5 text-indigo-400" /> Destination
+            <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+              <Navigation className="w-3.5 h-3.5 text-[#d93025]" /> Destination
             </label>
             <div className="relative">
               <input
@@ -383,18 +387,18 @@ export default function InputPanel({
                   setDestQuery(e.target.value);
                   setDestLocation(null);
                 }}
-                placeholder="Search Indian destination"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-3 pr-8 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                placeholder="Choose destination"
+                className="w-full bg-white border border-[#dadce0] rounded-lg pl-3 pr-8 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
               />
               {isSearchingDest ? (
-                <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin absolute right-2.5 top-2.5" />
+                <Loader2 className="w-3.5 h-3.5 text-[#d93025] animate-spin absolute right-2.5 top-2.5" />
               ) : (
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-2.5" />
+                <Search className="w-3.5 h-3.5 text-[#5f6368] absolute right-2.5 top-2.5" />
               )}
             </div>
 
             {destSuggestions.length > 0 && !destLocation && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-slate-800">
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#dadce0] rounded-xl shadow-xl max-h-40 overflow-y-auto z-30 divide-y divide-[#dadce0]">
                 {destSuggestions.map((item, idx) => (
                   <button
                     key={idx}
@@ -407,9 +411,9 @@ export default function InputPanel({
                         onSelectDestLocation(loc);
                       }
                     }}
-                    className="w-full text-left px-2.5 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 flex items-start space-x-1.5"
+                    className="w-full text-left px-2.5 py-2 text-[11px] text-[#202124] hover:bg-slate-50 flex items-start space-x-2"
                   >
-                    <Navigation className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
+                    <Navigation className="w-3 h-3 text-[#d93025] mt-0.5 shrink-0" />
                     <span className="truncate">{item.displayName}</span>
                   </button>
                 ))}
@@ -419,9 +423,9 @@ export default function InputPanel({
         </div>
 
         {/* Climate & Weather Impact */}
-        <div className="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800">
-          <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Thermometer className="w-3.5 h-3.5 text-slate-400" /> Climate AC Impact
+        <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
+          <div className="text-[11px] font-bold text-[#5f6368] uppercase tracking-wider flex items-center gap-1.5">
+            <Thermometer className="w-3.5 h-3.5 text-[#5f6368]" /> Climate AC Impact
           </div>
 
           <div className="grid grid-cols-3 gap-1">
@@ -429,10 +433,10 @@ export default function InputPanel({
               <button
                 key={mode}
                 onClick={() => setAcMode(mode)}
-                className={`py-1 text-[10px] font-bold rounded-lg border transition-all ${
+                className={`py-1 text-[10px] font-semibold rounded-md border transition-all ${
                   acMode === mode
-                    ? 'bg-slate-800 text-slate-100 border-slate-600'
-                    : 'bg-slate-900 text-slate-400 border-slate-800'
+                    ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-sm'
+                    : 'bg-white text-[#5f6368] border-[#dadce0] hover:bg-slate-50'
                 }`}
               >
                 {mode}
@@ -442,13 +446,13 @@ export default function InputPanel({
         </div>
 
         {/* Range & Buffer Sliders */}
-        <div className="space-y-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+        <div className="space-y-2.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
           <div className="space-y-1">
-            <div className="flex justify-between items-center text-[11px] font-bold">
-              <span className="text-slate-300 flex items-center gap-1">
-                <Gauge className="w-3.5 h-3.5 text-emerald-400" /> Range
+            <div className="flex justify-between items-center text-[11px] font-semibold">
+              <span className="text-[#3c4043] flex items-center gap-1">
+                <Gauge className="w-3.5 h-3.5 text-[#1e8e3e]" /> Starting Range
               </span>
-              <span className="text-emerald-400 font-mono">{currentRange} km</span>
+              <span className="text-[#1a73e8] font-bold">{currentRange} km</span>
             </div>
             <input
               type="range"
@@ -456,16 +460,16 @@ export default function InputPanel({
               max={selectedVehicle.range}
               value={currentRange}
               onChange={(e) => setCurrentRange(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1a73e8]"
             />
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between items-center text-[11px] font-bold">
-              <span className="text-slate-300 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" /> Target Buffer SOC
+            <div className="flex justify-between items-center text-[11px] font-semibold">
+              <span className="text-[#3c4043] flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#1a73e8]" /> Reserve Buffer SOC
               </span>
-              <span className="text-indigo-400 font-mono">{minSocBuffer}%</span>
+              <span className="text-[#1a73e8] font-bold">{minSocBuffer}%</span>
             </div>
             <input
               type="range"
@@ -473,22 +477,22 @@ export default function InputPanel({
               max="30"
               value={minSocBuffer}
               onChange={(e) => setMinSocBuffer(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1a73e8]"
             />
           </div>
         </div>
 
         {/* Submit & Action Buttons */}
-        <div className="space-y-1.5">
+        <div className="space-y-2 pt-1">
           <button
             onClick={onPlanRoute}
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-emerald-800 hover:bg-emerald-700 text-slate-100 font-bold rounded-xl border border-emerald-700 transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Calculating...</span>
+                <span>Optimizing Highway Route...</span>
               </>
             ) : (
               <>
@@ -502,21 +506,21 @@ export default function InputPanel({
             <div className="grid grid-cols-3 gap-1.5 text-[10px]">
               <button
                 onClick={handleSaveTripToMongo}
-                className="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl font-bold transition-all truncate"
+                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all shadow-sm truncate"
               >
-                Save Mongo
+                Save Trip
               </button>
 
               <button
                 onClick={onOpenExportModal}
-                className="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl font-bold transition-all truncate"
+                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all shadow-sm truncate"
               >
                 Export PDF
               </button>
 
               <button
                 onClick={onOpenPassengerQrModal}
-                className="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white rounded-xl font-bold transition-all flex items-center justify-center gap-0.5 truncate"
+                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all flex items-center justify-center gap-1 shadow-sm truncate"
               >
                 <QrCode className="w-3 h-3" /> QR Pass
               </button>

@@ -105,18 +105,18 @@ export default function NovaAiAssistant({
       style={{ zIndex: 9999 }}
     >
       
-      {/* Launcher Badge */}
+      {/* Launcher Badge - Clean Google Maps Floating Pill */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-slate-900 border border-slate-700 text-slate-100 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2.5 hover:bg-slate-800 transition-all cursor-pointer group active:scale-95"
+          className="bg-white border border-[#dadce0] text-[#202124] px-4 py-2.5 rounded-full shadow-lg flex items-center space-x-2.5 hover:bg-slate-50 transition-all cursor-pointer group active:scale-95"
         >
-          <div className="p-1.5 bg-emerald-800 text-slate-100 rounded-xl border border-emerald-700">
-            <Sparkles className="w-4 h-4 text-emerald-300" />
+          <div className="p-1.5 bg-blue-50 text-[#1a73e8] rounded-full border border-blue-200">
+            <Sparkles className="w-4 h-4 fill-current" />
           </div>
           <div className="text-left pr-1">
-            <div className="text-[10px] font-bold uppercase text-slate-400">Driver Assistant</div>
-            <div className="text-xs font-bold text-slate-100">
+            <div className="text-[10px] font-bold uppercase text-[#5f6368]">Assistant</div>
+            <div className="text-xs font-bold text-[#202124]">
               Ask Nova AI
             </div>
           </div>
@@ -125,20 +125,20 @@ export default function NovaAiAssistant({
 
       {/* Chat Box Modal */}
       {isOpen && (
-        <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-[380px] h-[520px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="bg-white border border-[#dadce0] rounded-2xl max-w-sm w-[380px] h-[520px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 text-[#202124]">
           
           {/* Header */}
-          <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+          <div className="p-3.5 bg-white border-b border-[#dadce0] flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
-              <div className="p-2 bg-emerald-800 text-slate-100 rounded-xl border border-emerald-700 font-bold">
-                <Bot className="w-5 h-5" />
+              <div className="p-2 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200 font-bold">
+                <Bot className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-[#202124] flex items-center gap-1.5">
                   <span>Nova AI Assistant</span>
-                  <span className="px-1.5 py-0.5 bg-slate-800 text-slate-400 text-[9px] rounded font-mono">v2.0</span>
+                  <span className="px-1.5 py-0.5 bg-blue-50 text-[#1a73e8] text-[9px] rounded font-mono font-semibold">v2.0</span>
                 </h3>
-                <p className="text-[10px] text-slate-400 font-medium">Route & Vehicle Aware</p>
+                <p className="text-[10px] text-[#5f6368]">Route & Vehicle Aware</p>
               </div>
             </div>
 
@@ -147,46 +147,46 @@ export default function NovaAiAssistant({
                 window.speechSynthesis?.cancel();
                 setIsOpen(false);
               }}
-              className="p-1.5 text-slate-400 hover:text-white rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors"
+              className="p-1.5 text-[#5f6368] hover:text-[#202124] rounded-full hover:bg-slate-100 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Quick Presets */}
-          <div className="p-2 bg-slate-950 border-b border-slate-800 flex items-center space-x-1.5 overflow-x-auto text-[10px] font-bold text-slate-300">
+          <div className="p-2 bg-[#f8f9fa] border-b border-[#dadce0] flex items-center space-x-1.5 overflow-x-auto text-[10px] font-semibold text-[#5f6368]">
             <button
               onClick={() => handleSendPrompt("Will my battery reach destination?")}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg whitespace-nowrap text-slate-200 flex items-center gap-1 shrink-0"
+              className="px-2.5 py-1 bg-white hover:bg-blue-50 border border-[#dadce0] rounded-full whitespace-nowrap text-[#3c4043] flex items-center gap-1 shrink-0 shadow-sm"
             >
-              <Battery className="w-3 h-3 text-emerald-400" /> Can I reach?
+              <Battery className="w-3 h-3 text-[#1e8e3e]" /> Can I reach?
             </button>
             <button
               onClick={() => handleSendPrompt("Where is the nearest fast charger?")}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg whitespace-nowrap text-slate-200 flex items-center gap-1 shrink-0"
+              className="px-2.5 py-1 bg-white hover:bg-blue-50 border border-[#dadce0] rounded-full whitespace-nowrap text-[#3c4043] flex items-center gap-1 shrink-0 shadow-sm"
             >
-              <Zap className="w-3 h-3 text-emerald-400" /> Nearest Charger
+              <Zap className="w-3 h-3 text-[#1a73e8]" /> Nearest Charger
             </button>
             <button
               onClick={() => handleSendPrompt("What is the traffic status?")}
-              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg whitespace-nowrap text-slate-200 flex items-center gap-1 shrink-0"
+              className="px-2.5 py-1 bg-white hover:bg-blue-50 border border-[#dadce0] rounded-full whitespace-nowrap text-[#3c4043] flex items-center gap-1 shrink-0 shadow-sm"
             >
-              <Radio className="w-3 h-3 text-blue-400" /> Traffic Info
+              <Radio className="w-3 h-3 text-[#f9ab00]" /> Traffic Info
             </button>
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#ffffff]">
             {messages.map((msg, i) => (
               <div
                 key={i}
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium leading-relaxed shadow-sm ${
+                  className={`max-w-[85%] p-3 rounded-2xl text-xs font-normal leading-relaxed shadow-sm ${
                     msg.sender === 'user'
-                      ? 'bg-emerald-800 text-slate-100 font-semibold rounded-br-none border border-emerald-700'
-                      : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none'
+                      ? 'bg-[#1a73e8] text-white font-medium rounded-br-none'
+                      : 'bg-[#f1f3f4] border border-[#dadce0] text-[#202124] rounded-bl-none'
                   }`}
                 >
                   {msg.text}
@@ -196,8 +196,8 @@ export default function NovaAiAssistant({
 
             {isThinking && (
               <div className="flex justify-start">
-                <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl text-xs text-slate-400 font-bold flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                <div className="bg-[#f1f3f4] border border-[#dadce0] p-2.5 rounded-2xl text-xs text-[#5f6368] font-medium flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a73e8]" />
                   <span>Nova AI analyzing route...</span>
                 </div>
               </div>
@@ -206,13 +206,13 @@ export default function NovaAiAssistant({
           </div>
 
           {/* Input Controls */}
-          <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center space-x-2">
+          <div className="p-3 bg-white border-t border-[#dadce0] flex items-center space-x-2">
             <button
               onClick={handleStartVoiceInput}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2.5 rounded-full border transition-all ${
                 isListening
-                  ? 'bg-rose-950/60 text-rose-300 border-rose-800 animate-pulse'
-                  : 'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'
+                  ? 'bg-red-50 text-[#d93025] border-red-200 animate-pulse'
+                  : 'bg-[#f8f9fa] text-[#5f6368] border-[#dadce0] hover:bg-slate-100'
               }`}
               title="Speak Voice Question"
             >
@@ -224,15 +224,15 @@ export default function NovaAiAssistant({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendPrompt()}
-              placeholder={isListening ? "Listening..." : "Ask Nova AI driver question..."}
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+              placeholder={isListening ? "Listening..." : "Ask a question..."}
+              className="flex-1 bg-[#f8f9fa] border border-[#dadce0] rounded-full px-4 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8]"
             />
 
             <button
               onClick={() => handleSendPrompt()}
-              className="p-2.5 bg-emerald-800 hover:bg-emerald-700 text-slate-100 font-bold rounded-xl transition-all border border-emerald-700"
+              className="p-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-bold rounded-full transition-all shadow-sm"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
 
           </div>

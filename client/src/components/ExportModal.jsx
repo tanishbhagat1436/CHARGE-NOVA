@@ -37,26 +37,26 @@ export default function ExportModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md flex items-center justify-center p-4 font-sans"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 font-sans"
       style={{ zIndex: 99999 }}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="bg-white border border-[#dadce0] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 text-[#202124]">
         
         {/* Header */}
-        <div className="p-4 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-white text-zinc-950 rounded-xl font-bold">
+        <div className="p-4 bg-white border-b border-[#dadce0] flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200 font-bold">
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Export Trip Itinerary</h3>
-              <p className="text-[10px] text-zinc-400 font-medium">PDF Export & Google Maps Launcher</p>
+              <h3 className="text-sm font-bold text-[#202124]">Export Trip Itinerary</h3>
+              <p className="text-[10px] text-[#5f6368]">PDF Document & Google Maps Export</p>
             </div>
           </div>
 
           <button 
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-white rounded-xl bg-zinc-900 hover:bg-zinc-800 transition-colors"
+            className="p-1.5 text-[#5f6368] hover:text-[#202124] rounded-full hover:bg-slate-100 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -65,32 +65,32 @@ export default function ExportModal({
         {/* Content Body */}
         <div className="p-4 space-y-3">
           
-          <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-1">
-            <div className="text-xs font-bold text-white truncate">
+          <div className="bg-[#f8f9fa] p-3.5 rounded-xl border border-[#dadce0] space-y-1">
+            <div className="text-xs font-bold text-[#202124] truncate">
               {sourceName} ➔ {destName}
             </div>
-            <div className="text-[11px] text-zinc-400">
-              Vehicle: <span className="text-white font-semibold">{vehicleName}</span> • Distance: <span className="text-white font-semibold">{routeData.distanceKm} km</span>
+            <div className="text-[11px] text-[#5f6368]">
+              Vehicle: <span className="text-[#202124] font-semibold">{vehicleName}</span> • Distance: <span className="text-[#1a73e8] font-bold">{routeData.distanceKm} km</span>
             </div>
-            <div className="text-[10px] text-zinc-500">
+            <div className="text-[10px] text-[#5f6368]">
               Recommended Stops: {stops.length} Fast Charging Stations
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 pt-1">
             <button
               onClick={handleExportPdf}
-              className="w-full py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center space-x-2 border border-white"
+              className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm"
             >
-              {downloaded ? <Check className="w-4 h-4 text-emerald-600" /> : <Download className="w-4 h-4" />}
-              <span>{downloaded ? 'Preparing Printable PDF...' : 'Download / Print PDF Itinerary'}</span>
+              {downloaded ? <Check className="w-4 h-4 text-white" /> : <Download className="w-4 h-4" />}
+              <span>{downloaded ? 'Opening Print Dialog...' : 'Download / Print PDF Itinerary'}</span>
             </button>
 
             <button
               onClick={handleOpenGoogleMaps}
-              className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 text-white border border-zinc-700 font-bold rounded-xl text-xs transition-all flex items-center justify-center space-x-2"
+              className="w-full py-2.5 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm"
             >
-              <ExternalLink className="w-4 h-4 text-blue-400" />
+              <ExternalLink className="w-4 h-4 text-[#1a73e8]" />
               <span>Launch in Google Maps (Multi-Stop)</span>
             </button>
           </div>

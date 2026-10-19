@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, LogIn, UserPlus, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiConfig';
 
 export default function AuthModal({ onClose, onAuthSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
@@ -49,7 +50,7 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
         ? { name, email, password }
         : { email, password };
 
-      const response = await axios.post(`http://localhost:5000${endpoint}`, payload);
+      const response = await axios.post(`${getApiBaseUrl()}${endpoint}`, payload);
 
       if (response.data?.success) {
         const { user, token } = response.data;
@@ -74,48 +75,48 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 font-sans"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
       style={{ zIndex: 99999 }}
     >
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative">
+      <div className="bg-white border border-[#dadce0] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden relative text-[#202124]">
         
         {/* Header Bar */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+        <div className="p-4 border-b border-[#dadce0] bg-white flex items-center justify-between">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200">
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-slate-100">
-                {activeTab === 'login' ? 'Sign In to Charge Nova' : 'Create Real Account'}
+              <h3 className="font-bold text-base text-[#202124]">
+                {activeTab === 'login' ? 'Sign In to Charge Nova' : 'Create Free Account'}
               </h3>
-              <p className="text-[11px] text-slate-400 font-medium">Access saved trips & EV analytics</p>
+              <p className="text-[11px] text-[#5f6368]">Access saved trips & EV analytics</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition-colors"
+            className="p-1.5 text-[#5f6368] hover:text-[#202124] hover:bg-slate-100 rounded-full transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1.5 bg-slate-950 m-4 rounded-2xl border border-slate-800 text-xs font-bold">
+        <div className="grid grid-cols-2 p-1 bg-[#f8f9fa] m-4 rounded-xl border border-[#dadce0] text-xs font-semibold">
           <button
             type="button"
             onClick={() => {
               setActiveTab('login');
               setErrorMessage('');
             }}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'login'
-                ? 'bg-slate-800 text-slate-100 shadow border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-[#1a73e8] shadow-sm font-bold'
+                : 'text-[#5f6368] hover:text-[#202124]'
             }`}
           >
-            <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+            <LogIn className="w-3.5 h-3.5 text-[#1a73e8]" />
             <span>Sign In</span>
           </button>
 
@@ -125,32 +126,32 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
               setActiveTab('register');
               setErrorMessage('');
             }}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'register'
-                ? 'bg-slate-800 text-slate-100 shadow border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-[#1a73e8] shadow-sm font-bold'
+                : 'text-[#5f6368] hover:text-[#202124]'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5 text-indigo-400" />
+            <UserPlus className="w-3.5 h-3.5 text-[#1a73e8]" />
             <span>Register</span>
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 pt-1 space-y-3.5">
           
           {/* Error Message Alert */}
           {errorMessage && (
-            <div className="p-3 bg-rose-950/50 border border-rose-800/80 rounded-xl text-rose-300 text-xs font-medium flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-[#d93025] text-xs font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* Success Message Alert */}
           {successMessage && (
-            <div className="p-3 bg-emerald-950/50 border border-emerald-800/80 rounded-xl text-emerald-300 text-xs font-medium flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[#1e8e3e] text-xs font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
@@ -158,39 +159,39 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
           {/* Name Field (Register only) */}
           {activeTab === 'register' && (
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-indigo-400" /> Full Name
+              <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-[#1a73e8]" /> Full Name
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Tanish Bhagat"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600 font-semibold"
+                placeholder="e.g. Rahul Sharma"
+                className="w-full bg-white border border-[#dadce0] rounded-lg px-3 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
           )}
 
           {/* Email Field */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-              <Mail className="w-3.5 h-3.5 text-emerald-400" /> Email Address
+            <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+              <Mail className="w-3.5 h-3.5 text-[#1a73e8]" /> Email Address
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. tanish@example.com"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600 font-semibold"
+              placeholder="e.g. driver@example.com"
+              className="w-full bg-white border border-[#dadce0] rounded-lg px-3 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8]"
             />
           </div>
 
           {/* Password Field */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5 text-amber-400" /> Password
+            <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5 text-[#1a73e8]" /> Password
             </label>
             <input
               type="password"
@@ -198,15 +199,15 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600 font-semibold"
+              className="w-full bg-white border border-[#dadce0] rounded-lg px-3 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8]"
             />
           </div>
 
           {/* Confirm Password (Register only) */}
           {activeTab === 'register' && (
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5 text-indigo-400" /> Confirm Password
+              <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5 text-[#1a73e8]" /> Confirm Password
               </label>
               <input
                 type="password"
@@ -214,7 +215,7 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600 font-semibold"
+                className="w-full bg-white border border-[#dadce0] rounded-lg px-3 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8]"
               />
             </div>
           )}
@@ -223,7 +224,7 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50 mt-4"
+            className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full shadow-sm transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50 mt-3"
           >
             {isLoading ? (
               <>
@@ -231,7 +232,7 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
                 <span>Processing...</span>
               </>
             ) : (
-              <span>{activeTab === 'login' ? 'Sign In to Account' : 'Create Account'}</span>
+              <span>{activeTab === 'login' ? 'Sign In to Account' : 'Create Free Account'}</span>
             )}
           </button>
 

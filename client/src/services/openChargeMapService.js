@@ -34,6 +34,7 @@ export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
  */
 export const fetchStationsNearPoint = async (lat, lng, distanceKm = 15) => {
   try {
+    const apiKey = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_OPENCHARGEMAP_API_KEY;
     const response = await axios.get('https://api.openchargemap.io/v3/poi/', {
       params: {
         output: 'json',
@@ -45,6 +46,10 @@ export const fetchStationsNearPoint = async (lat, lng, distanceKm = 15) => {
         maxresults: 3,
         compact: true,
         verbose: false
+      },
+      headers: {
+        'User-Agent': 'ChargeNova-EVPlanner/1.0',
+        ...(apiKey ? { 'X-API-Key': apiKey } : {})
       },
       timeout: 2500
     });

@@ -26,88 +26,88 @@ export default function MapToolbar({
       className="fixed top-4 right-4 font-sans animate-in slide-in-from-top-4 duration-300"
       style={{ zIndex: 9999 }}
     >
-      <div className="bg-slate-900 border border-slate-700 p-1.5 rounded-2xl shadow-2xl flex items-center space-x-1.5 flex-wrap gap-y-1">
+      <div className="bg-white/95 border border-[#dadce0] p-1.5 rounded-full shadow-md flex items-center space-x-1 flex-wrap gap-y-1 backdrop-blur-sm text-[#202124]">
         
         {/* About / Landing Page Button */}
         {onOpenLandingPage && (
           <button
             onClick={onOpenLandingPage}
-            className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+            className="px-3 py-1.5 bg-white hover:bg-slate-100 text-[#3c4043] rounded-full text-xs font-medium transition-all flex items-center gap-1 border border-transparent hover:border-[#dadce0]"
             title="View Landing Page & Features"
           >
-            <span>About</span>
+            <span>Home</span>
           </button>
         )}
 
         {/* SOS Emergency Button */}
         <button
           onClick={onOpenSosModal}
-          className="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
+          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-full text-xs font-semibold flex items-center gap-1 transition-all"
           title="24x7 EV Emergency Helpline"
         >
-          <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+          <ShieldAlert className="w-3.5 h-3.5 text-[#d93025]" />
           <span>SOS</span>
         </button>
 
         {/* Toggle Turn Guidance Banner */}
         <button
           onClick={() => setShowNavBanner(!showNavBanner)}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
+          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border ${
             showNavBanner
-              ? 'bg-emerald-800 text-white border-emerald-700 shadow-md font-bold'
-              : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+              ? 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
+              : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
           }`}
         >
-          <Compass className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Turn Guide</span>
+          <Compass className="w-3.5 h-3.5 text-[#1a73e8]" />
+          <span>Turns</span>
         </button>
 
         {/* Toggle Trip Analytics & Savings */}
         <button
           onClick={() => setShowSummaryCard(!showSummaryCard)}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
+          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border ${
             showSummaryCard
-              ? 'bg-emerald-800 text-white border-emerald-700 shadow-md font-bold'
-              : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+              ? 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
+              : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
           }`}
         >
-          <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+          <BarChart3 className="w-3.5 h-3.5 text-[#1a73e8]" />
           <span>Trip Details</span>
         </button>
 
         {/* Toggle Traffic Flow */}
         <button
           onClick={() => setShowTrafficLegend(!showTrafficLegend)}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
+          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border ${
             showTrafficLegend
-              ? 'bg-blue-800 text-white border-blue-700 shadow-md font-bold'
-              : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+              ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
+              : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
           }`}
         >
-          <Activity className="w-3.5 h-3.5 text-blue-400" />
+          <Activity className="w-3.5 h-3.5 text-amber-600" />
           <span>Traffic</span>
         </button>
 
         {/* Toggle Bottom Dashboard */}
         <button
           onClick={() => setShowBottomDashboard(!showBottomDashboard)}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all border ${
+          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border ${
             showBottomDashboard
-              ? 'bg-emerald-800 text-white border-emerald-700 shadow-md font-bold'
-              : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+              ? 'bg-emerald-50 text-[#1e8e3e] border-emerald-200 shadow-sm'
+              : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
           }`}
         >
-          <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
+          <BatteryCharging className="w-3.5 h-3.5 text-[#1e8e3e]" />
           <span>Battery</span>
         </button>
 
         {/* 3D Tilt Toggle */}
         <button
           onClick={() => setIs3dTilted(!is3dTilted)}
-          className={`px-2.5 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 transition-all border ${
+          className={`px-2.5 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1 transition-all border ${
             is3dTilted
-              ? 'bg-slate-800 text-white border-slate-600 shadow-md font-bold'
-              : 'bg-slate-950 text-slate-400 border-slate-800'
+              ? 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
+              : 'bg-white text-[#5f6368] border-transparent hover:bg-slate-100'
           }`}
           title="Toggle 3D Map View"
         >
@@ -119,7 +119,7 @@ export default function MapToolbar({
         {userGpsLocation && (
           <button
             onClick={onRecenterUser}
-            className="p-2 bg-slate-950 hover:bg-slate-800 text-blue-400 border border-slate-800 rounded-xl transition-all"
+            className="p-1.5 bg-white hover:bg-slate-100 text-[#1a73e8] rounded-full transition-all border border-transparent hover:border-[#dadce0]"
             title="Fly to Live GPS Location"
           >
             <Crosshair className="w-4 h-4" />
@@ -129,17 +129,17 @@ export default function MapToolbar({
         {/* Tile Style Switcher */}
         <button
           onClick={() => setActiveTile(activeTile === 'dark' ? 'osm' : 'dark')}
-          className="px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+          className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-[#5f6368] rounded-full text-xs font-medium transition-all flex items-center gap-1 border border-transparent hover:border-[#dadce0]"
           title="Toggle Map Style"
         >
-          {activeTile === 'dark' ? <Moon className="w-3.5 h-3.5 text-indigo-400" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
-          <span>{activeTile === 'dark' ? 'Dark' : 'Light'}</span>
+          {activeTile === 'dark' ? <Moon className="w-3.5 h-3.5 text-[#1a73e8]" /> : <Sun className="w-3.5 h-3.5 text-[#f9ab00]" />}
+          <span>{activeTile === 'dark' ? 'Dark' : 'Day'}</span>
         </button>
 
         {/* Reset Bounds */}
         <button
           onClick={onResetBounds}
-          className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 transition-colors"
+          className="p-1.5 bg-white hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] rounded-full transition-colors border border-transparent hover:border-[#dadce0]"
           title="Reset Map View"
         >
           <RotateCcw className="w-4 h-4" />

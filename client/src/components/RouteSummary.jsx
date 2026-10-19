@@ -6,11 +6,11 @@ import {
   Navigation, 
   DollarSign, 
   Leaf, 
-  ArrowRight,
-  Zap,
-  Clock,
-  TrendingDown,
-  X
+  ArrowRight, 
+  Zap, 
+  Clock, 
+  TrendingDown, 
+  X 
 } from 'lucide-react';
 import CostSavingsWidget from './CostSavingsWidget';
 
@@ -38,31 +38,31 @@ export default function RouteSummary({
       className="fixed top-20 right-4 font-sans max-w-xs w-80 animate-in slide-in-from-right-4 duration-300"
       style={{ zIndex: 9990 }}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-110px)]">
+      <div className="bg-white border border-[#dadce0] rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[calc(100vh-110px)] text-[#202124]">
         
-        {/* Header */}
-        <div className="p-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between">
+        {/* Header - Google Maps Style */}
+        <div className="p-3 bg-white border-b border-[#dadce0] flex items-center justify-between">
           <div>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Route Summary</span>
-            <h2 className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5">
-              <span>{totalDistance} km</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#5f6368]">Trip Overview</span>
+            <h2 className="text-xs font-bold text-[#202124] flex items-center gap-1.5 mt-0.5">
+              <span className="text-[#1a73e8] font-extrabold">{totalDistance} km</span>
               <span>•</span>
-              <span className="text-zinc-300 font-mono">{hours}h {mins}m</span>
+              <span className="text-[#3c4043] font-mono">{hours}h {mins}m</span>
             </h2>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1.5">
             {/* Tabs Switcher */}
-            <div className="flex bg-zinc-900 p-0.5 rounded-lg border border-zinc-800 text-[10px] font-bold">
+            <div className="flex bg-[#f8f9fa] p-0.5 rounded-lg border border-[#dadce0] text-[10px] font-semibold">
               <button
                 onClick={() => setActiveTab('itinerary')}
-                className={`px-2 py-0.5 rounded-md transition-all ${activeTab === 'itinerary' ? 'bg-white text-zinc-950 font-black' : 'text-zinc-400'}`}
+                className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'itinerary' ? 'bg-[#1a73e8] text-white shadow-sm font-bold' : 'text-[#5f6368]'}`}
               >
                 Plan
               </button>
               <button
                 onClick={() => setActiveTab('savings')}
-                className={`px-2 py-0.5 rounded-md transition-all ${activeTab === 'savings' ? 'bg-white text-zinc-950 font-black' : 'text-zinc-400'}`}
+                className={`px-2.5 py-1 rounded-md transition-all ${activeTab === 'savings' ? 'bg-[#1a73e8] text-white shadow-sm font-bold' : 'text-[#5f6368]'}`}
               >
                 Savings
               </button>
@@ -71,7 +71,7 @@ export default function RouteSummary({
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-1 text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg border border-zinc-800 transition-colors"
+                className="p-1 text-[#5f6368] hover:text-[#202124] hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -85,8 +85,8 @@ export default function RouteSummary({
             
             {/* Charging Halts */}
             <div className="space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">
-                <Zap className="w-3 h-3 text-white" /> Recommended Fast Halts ({stops.length})
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#5f6368] flex items-center gap-1">
+                <Zap className="w-3 h-3 text-[#1e8e3e]" /> Recommended Halts ({stops.length})
               </div>
 
               {stops.length > 0 ? (
@@ -95,21 +95,21 @@ export default function RouteSummary({
                     <div
                       key={idx}
                       onClick={() => onSelectStation && onSelectStation(st)}
-                      className="p-2 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-xl cursor-pointer transition-all space-y-1"
+                      className="p-2.5 bg-[#f8f9fa] hover:bg-blue-50 border border-[#dadce0] hover:border-[#1a73e8] rounded-xl cursor-pointer transition-all space-y-1 shadow-sm"
                     >
                       <div className="flex justify-between items-start">
-                        <span className="font-bold text-white text-xs truncate max-w-[180px]">{st.name}</span>
-                        <span className="text-[9px] font-mono text-zinc-300 font-bold">Km {st.distanceFromStartKm}</span>
+                        <span className="font-bold text-[#202124] text-xs truncate max-w-[180px]">{st.name}</span>
+                        <span className="text-[9px] font-mono text-[#1a73e8] font-bold">Km {st.distanceFromStartKm}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-zinc-400">
-                        <span>{st.power} kW DC Fast</span>
-                        <span className="text-white font-bold">Charge ~{st.chargeTimeMins} mins</span>
+                      <div className="flex justify-between items-center text-[10px] text-[#5f6368]">
+                        <span className="font-medium text-[#1e8e3e]">{st.power} kW DC Fast</span>
+                        <span className="text-[#3c4043] font-semibold">Charge ~{st.chargeTimeMins} mins</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-zinc-950 rounded-xl text-[10px] text-zinc-400 border border-zinc-800">
+                <div className="p-2.5 bg-[#f8f9fa] rounded-xl text-[10px] text-[#5f6368] border border-[#dadce0]">
                   Direct drive! Battery range is sufficient for this trip.
                 </div>
               )}
@@ -118,18 +118,18 @@ export default function RouteSummary({
             {/* Turn Maneuvers */}
             {routeData.steps && routeData.steps.length > 0 && (
               <div className="space-y-1.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">
-                  <Compass className="w-3 h-3 text-zinc-300" /> Turn Directions ({routeData.steps.length})
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#5f6368] flex items-center gap-1">
+                  <Compass className="w-3 h-3 text-[#1a73e8]" /> Turn Directions ({routeData.steps.length})
                 </div>
                 <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                   {routeData.steps.map((step) => (
                     <button
                       key={step.id}
                       onClick={() => onSelectTurnStep && onSelectTurnStep(step)}
-                      className="w-full text-left p-1.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl text-[11px] flex justify-between items-center text-zinc-200 border border-zinc-800 transition-all"
+                      className="w-full text-left p-2 bg-[#f8f9fa] hover:bg-blue-50 rounded-xl text-[11px] flex justify-between items-center text-[#202124] border border-[#dadce0] transition-all"
                     >
                       <span className="truncate pr-1 font-medium">{step.instruction}</span>
-                      <span className="text-[9px] font-mono text-zinc-400 shrink-0">Km {step.cumulativeKm}</span>
+                      <span className="text-[9px] font-mono text-[#5f6368] shrink-0">Km {step.cumulativeKm}</span>
                     </button>
                   ))}
                 </div>

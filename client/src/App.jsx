@@ -36,10 +36,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom Station Marker Icon
+// Custom Station Marker Icon - Google Maps Style
 const createStationIcon = (isHalt = false) => L.divIcon({
   className: 'custom-station-icon',
-  html: `<div class="${isHalt ? 'bg-amber-400 text-slate-950 shadow-amber-400/40 ring-4 ring-amber-400/20' : 'bg-emerald-500 text-slate-950 shadow-emerald-500/30'} p-2 rounded-full shadow-xl border-2 border-white flex items-center justify-center animate-bounce">
+  html: `<div class="${isHalt ? 'bg-amber-500 text-white shadow-amber-500/40 ring-4 ring-amber-100' : 'bg-emerald-600 text-white shadow-emerald-600/30 ring-4 ring-emerald-100'} p-2 rounded-full shadow-lg border-2 border-white flex items-center justify-center animate-bounce">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
          </div>`,
   iconSize: [34, 34],
@@ -47,31 +47,31 @@ const createStationIcon = (isHalt = false) => L.divIcon({
   popupAnchor: [0, -17]
 });
 
-// Destination Marker Icon
+// Destination Marker Icon - Google Maps Red Pin
 const destIcon = L.divIcon({
   className: 'custom-dest-icon',
-  html: `<div class="bg-indigo-600 text-white p-2 rounded-full shadow-xl border-2 border-white flex items-center justify-center">
+  html: `<div class="bg-[#d93025] text-white p-2 rounded-full shadow-lg border-2 border-white flex items-center justify-center ring-4 ring-red-100">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
          </div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-  popupAnchor: [0, -16]
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -17]
 });
 
-// Animated EV Car Marker Icon
+// Animated EV Car Marker Icon - Google Blue Navigation Puck
 const createCarIcon = (heading = 0) => L.divIcon({
   className: 'custom-car-icon',
-  html: `<div style="transform: rotate(${heading}deg); transition: transform 0.3s ease-out;" class="bg-emerald-400 text-slate-950 p-2.5 rounded-full shadow-2xl shadow-emerald-400/60 border-2 border-slate-950 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+  html: `<div style="transform: rotate(${heading}deg); transition: transform 0.3s ease-out;" class="bg-[#1a73e8] text-white p-2.5 rounded-full shadow-xl ring-4 ring-blue-100 border-2 border-white flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
          </div>`,
-  iconSize: [38, 38],
-  iconAnchor: [19, 19],
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
 });
 
 // Turn Step Marker Icon
 const activeTurnIcon = L.divIcon({
   className: 'custom-active-turn-icon',
-  html: `<div class="bg-indigo-500 text-white p-2 rounded-full shadow-2xl ring-4 ring-indigo-500/30 border-2 border-white flex items-center justify-center animate-bounce">
+  html: `<div class="bg-[#1a73e8] text-white p-2 rounded-full shadow-lg ring-4 ring-blue-100 border-2 border-white flex items-center justify-center animate-bounce">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
          </div>`,
   iconSize: [28, 28],
@@ -192,21 +192,16 @@ export default function App() {
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]);
   const [mapZoom, setMapZoom] = useState(5);
   const [mapBounds, setMapBounds] = useState(null);
-  const [activeTile, setActiveTile] = useState('dark');
+  const [activeTile, setActiveTile] = useState('osm');
   const [is3dTilted, setIs3dTilted] = useState(false);
   const [autoFollowCar, setAutoFollowCar] = useState(true);
 
   // Turn Step Tracker
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  // Auto Day/Night Theme Sensor
+  // Auto Daylight Theme
   useEffect(() => {
-    const currentHour = new Date().getHours();
-    if (currentHour >= 6 && currentHour < 18) {
-      setActiveTile('osm');
-    } else {
-      setActiveTile('dark');
-    }
+    setActiveTile('osm');
   }, []);
 
   // Driver Fatigue Alert
@@ -401,6 +396,49 @@ export default function App() {
     }
   }, [distanceDrivenKm, routeData]);
 
+  // Handle URL Query Params from Passenger QR Code scan on mobile
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const srcName = params.get('src');
+      const dstName = params.get('dst');
+      const srcLat = parseFloat(params.get('srcLat'));
+      const srcLng = parseFloat(params.get('srcLng'));
+      const dstLat = parseFloat(params.get('dstLat'));
+      const dstLng = parseFloat(params.get('dstLng'));
+      const vehicleParam = params.get('vehicle');
+
+      if (vehicleParam) {
+        const foundVeh = INITIAL_EV_PRESETS.find(
+          v => v.name.toLowerCase().includes(vehicleParam.toLowerCase()) || 
+               vehicleParam.toLowerCase().includes(v.name.toLowerCase())
+        );
+        if (foundVeh) setSelectedVehicle(foundVeh);
+      }
+
+      if (srcLat && srcLng && dstLat && dstLng) {
+        const srcObj = { 
+          lat: srcLat, 
+          lng: srcLng, 
+          displayName: srcName || `${srcLat.toFixed(2)}, ${srcLng.toFixed(2)}` 
+        };
+        const dstObj = { 
+          lat: dstLat, 
+          lng: dstLng, 
+          displayName: dstName || `${dstLat.toFixed(2)}, ${dstLng.toFixed(2)}` 
+        };
+        setSourceLocation(srcObj);
+        setDestLocation(dstObj);
+        setActiveView('planner');
+        handlePlanRoute(srcObj, dstObj);
+      } else if (params.get('view') === 'planner') {
+        setActiveView('planner');
+      }
+    } catch (e) {
+      console.warn('URL params parsing failed:', e);
+    }
+  }, []);
+
   const currentNavStep = routeData?.steps?.[currentStepIndex] || routeData?.steps?.[0];
   const nextNavStep = routeData?.steps?.[currentStepIndex + 1];
   const nextStepDistanceKm = nextNavStep 
@@ -421,12 +459,17 @@ export default function App() {
 
   if (activeView === 'landing') {
     return (
-      <div className="min-h-screen w-full bg-slate-950 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="w-full min-h-screen bg-[#f8f9fa] text-[#202124] font-['Plus_Jakarta_Sans',sans-serif] overflow-y-auto overflow-x-hidden">
         <LandingPage
           onClose={() => setActiveView('planner')}
-          onLaunchPlanner={() => {
+          evPresets={evPresetsList}
+          onLaunchPlanner={(src, dst) => {
             setActiveView('planner');
-            if (!routeData && sourceLocation && destLocation) {
+            if (src && dst) {
+              setSourceLocation(src);
+              setDestLocation(dst);
+              handlePlanRoute(src, dst);
+            } else if (!routeData && sourceLocation && destLocation) {
               handlePlanRoute(sourceLocation, destLocation);
             }
           }}
@@ -458,7 +501,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="flex h-screen w-screen bg-[#f8f9fa] text-[#202124] overflow-hidden font-['Plus_Jakarta_Sans',sans-serif] fixed inset-0">
       
       {/* SIDEBAR INPUT PANEL */}
       <InputPanel
@@ -606,11 +649,11 @@ export default function App() {
             isNavigating={isNavigating}
           />
 
-          {/* Tile Layer */}
+          {/* Tile Layer - Google Maps Style Clean Tiles */}
           {activeTile === 'dark' ? (
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             />
           ) : (
             <TileLayer
@@ -619,11 +662,11 @@ export default function App() {
             />
           )}
 
-          {/* Standard Polyline */}
+          {/* Standard Polyline - Classic Google Maps Route Blue */}
           {routeData && !showTraffic && (
             <Polyline
               positions={routeData.coordinates}
-              pathOptions={{ color: '#2563eb', weight: 8, opacity: 0.9 }}
+              pathOptions={{ color: '#1a73e8', weight: 7, opacity: 0.95 }}
             />
           )}
 
@@ -776,6 +819,8 @@ export default function App() {
       {showPassengerQrModal && (
         <PassengerQrModal
           routeData={routeData}
+          sourceLocation={sourceLocation}
+          destLocation={destLocation}
           vehicleName={selectedVehicle.name}
           onClose={() => setShowPassengerQrModal(false)}
         />
