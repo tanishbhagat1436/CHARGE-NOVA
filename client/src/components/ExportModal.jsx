@@ -54,26 +54,25 @@ export default function ExportModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 font-sans"
-      style={{ zIndex: 99999 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 font-sans z-[99999]"
     >
-      <div className="bg-white border border-[#dadce0] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 text-[#202124]">
+      <div className="bg-white border border-surface-border rounded-2xl max-w-md w-full overflow-hidden shadow-card-lg text-ink">
         
         {/* Header */}
-        <div className="p-4 bg-white border-b border-[#dadce0] flex items-center justify-between">
+        <div className="p-4 bg-white border-b border-surface-border flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200 font-bold">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 font-bold">
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#202124]">Export Trip Itinerary</h3>
-              <p className="text-[10px] text-[#5f6368]">PDF Document & Google Maps Export</p>
+              <h3 className="text-sm font-bold">Export Trip Itinerary</h3>
+              <p className="text-[10px] text-ink-secondary">PDF Document & Google Maps Export</p>
             </div>
           </div>
 
           <button 
             onClick={onClose}
-            className="p-1.5 text-[#5f6368] hover:text-[#202124] rounded-full hover:bg-slate-100 transition-colors"
+            className="p-1.5 text-ink-tertiary hover:text-ink hover:bg-surface-subtle rounded-full transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -82,15 +81,15 @@ export default function ExportModal({
         {/* Content Body */}
         <div className="p-4 space-y-3">
           
-          <div className="bg-[#f8f9fa] p-3.5 rounded-xl border border-[#dadce0] space-y-1">
-            <div className="text-xs font-bold text-[#202124] truncate">
+          <div className="bg-surface-muted p-3.5 rounded-xl border border-surface-border space-y-1">
+            <div className="text-xs font-bold truncate">
               {sourceName} ➔ {destName}
             </div>
-            <div className="text-[11px] text-[#5f6368]">
-              Vehicle: <span className="text-[#202124] font-semibold">{vehicleName}</span> • Distance: <span className="text-[#1a73e8] font-bold">{routeData.distanceKm} km</span>
+            <div className="text-[11px] text-ink-secondary">
+              Vehicle: <span className="font-semibold text-ink">{vehicleName}</span> • Distance: <span className="text-primary font-bold">{routeData.distanceKm} km</span>
             </div>
-            <div className="text-[10px] text-[#5f6368]">
-              Recommended Stops: {stops.length} Fast Charging Stations
+            <div className="text-[10px] text-ink-tertiary">
+              Recommended Halts: {stops.length} Fast Charging Stations
             </div>
           </div>
 
@@ -98,32 +97,46 @@ export default function ExportModal({
             {/* GPX Car Infotainment Button */}
             <button
               onClick={handleDownloadGpx}
-              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
+              className="w-full py-2.5 px-4 bg-white hover:bg-surface-subtle border border-surface-border text-ink rounded-xl text-xs font-semibold transition-all flex items-center justify-between shadow-card cursor-pointer"
             >
-              {gpxDownloaded ? <Check className="w-4 h-4 text-white" /> : <FileCode className="w-4 h-4" />}
-              <span>{gpxDownloaded ? 'GPX File Downloaded!' : 'Download .GPX File (Car Infotainment)'}</span>
-            </button>
-            <div className="flex items-center justify-center gap-1.5 text-[9px] text-[#5f6368]">
-              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Android Auto</span>
-              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Apple CarPlay</span>
-              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Garmin</span>
-              <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">OSMAnd</span>
-            </div>
-
-            <button
-              onClick={handleExportPdf}
-              className="w-full py-2.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
-            >
-              {downloaded ? <Check className="w-4 h-4 text-white" /> : <Download className="w-4 h-4" />}
-              <span>{downloaded ? 'Opening Print Dialog...' : 'Download / Print PDF Itinerary'}</span>
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                  <FileCode className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold">Download GPX File</div>
+                  <div className="text-[10px] text-ink-secondary">For Car Screen & GPS Dashboards</div>
+                </div>
+              </div>
+              <span className={`text-[11px] font-bold ${gpxDownloaded ? 'text-success' : 'text-primary'}`}>
+                {gpxDownloaded ? 'Downloaded ✓' : 'Export .gpx'}
+              </span>
             </button>
 
+            {/* Google Maps External Link */}
             <button
               onClick={handleOpenGoogleMaps}
-              className="w-full py-2.5 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] font-semibold rounded-full text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
+              className="w-full py-2.5 px-4 bg-white hover:bg-surface-subtle border border-surface-border text-ink rounded-xl text-xs font-semibold transition-all flex items-center justify-between shadow-card cursor-pointer"
             >
-              <ExternalLink className="w-4 h-4 text-[#1a73e8]" />
-              <span>Launch in Google Maps (Multi-Stop)</span>
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                  <ExternalLink className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold">Open in Google Maps</div>
+                  <div className="text-[10px] text-ink-secondary">Launches route with charging waypoints</div>
+                </div>
+              </div>
+              <span className="text-[11px] text-primary font-bold">Open App ➔</span>
+            </button>
+
+            {/* Print / Save as PDF */}
+            <button
+              onClick={handleExportPdf}
+              className="w-full py-2.5 px-4 bg-primary hover:bg-primary-700 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-2 shadow-card cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>{downloaded ? 'Opening Print Dialog...' : 'Print / Save as PDF'}</span>
             </button>
           </div>
 

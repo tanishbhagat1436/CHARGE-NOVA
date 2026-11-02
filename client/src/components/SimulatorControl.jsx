@@ -1,17 +1,8 @@
 import React from 'react';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Navigation, 
-  Gauge, 
-  BatteryCharging, 
-  Compass, 
-  RotateCcw, 
-  FastForward,
-  Cpu,
-  Radio,
-  Zap
+import {
+  Play, Pause, Square, Navigation,
+  Gauge, BatteryCharging, Compass,
+  RotateCcw, FastForward, Cpu, Radio, Zap, Sliders
 } from 'lucide-react';
 
 export default function SimulatorControl({
@@ -32,52 +23,89 @@ export default function SimulatorControl({
   setSimSpeedMultiplier = () => {},
   isSimPaused = false,
   setIsSimPaused = () => {},
-  onResetSimulation = () => {}
+  onResetSimulation = () => {},
+  isDark = false,
+  onOpenMobilePlan,
 }) {
-  const progressPercent = totalDistance > 0 
-    ? Math.min(100, Math.round((currentDistance / totalDistance) * 100)) 
+  const progressPercent = totalDistance > 0
+    ? Math.min(100, Math.round((currentDistance / totalDistance) * 100))
     : 0;
 
+  /* ── Battery colour ── */
+  const getSocColor = (soc) => {
+    if (soc >= 50) return '#16a34a';
+    if (soc >= 25) return '#d97706';
+    if (soc >= 15) return '#ea580c';
+    return '#dc2626';
+  };
+  const socColor = getSocColor(currentSoc);
+
+  /* ── Container surface ── */
+  const surface = isDark
+    ? 'bg-[#0b0f19]/90 border border-[rgba(34,211,238,0.15)] backdrop-blur-md text-[#e2e8f0]'
+    : 'bg-white border border-surface-border text-ink shadow-card-lg';
+
+  const metricTile = isDark
+    ? 'bg-[#1a2035] border border-[rgba(34,211,238,0.1)]'
+    : 'bg-surface-muted border border-surface-border';
+
+  const metricLabel = isDark ? 'text-[#94a3b8]' : 'text-ink-secondary';
+
+  const pillBase = isDark
+    ? 'bg-[#1a2035] border border-[rgba(34,211,238,0.12)]'
+    : 'bg-surface-subtle border border-surface-border';
+
+  const pillActive = isDark
+    ? 'bg-[#22d3ee]/20 text-[#22d3ee] border border-[#22d3ee]/30'
+    : 'bg-primary/10 text-primary border border-primary/20';
+
+  const pillInactive = isDark
+    ? 'text-[#94a3b8] hover:text-[#e2e8f0]'
+    : 'text-ink-secondary hover:text-ink';
+
   return (
-    <div 
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 font-sans max-w-xl w-full px-4 animate-in slide-in-from-bottom-4 duration-300"
+    <div
+      className="fixed bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 font-sans max-w-xl w-[calc(100%-20px)] sm:w-full px-2 sm:px-4 animate-fade-up"
       style={{ zIndex: 9990 }}
     >
-      <div className="bg-white border border-[#dadce0] p-3.5 rounded-2xl shadow-xl space-y-2.5 text-[#202124]">
-        
-        {/* Top Control Line */}
-        <div className="flex items-center justify-between border-b border-[#dadce0] pb-2.5 gap-2">
-          
+      <div className={`p-3 md:p-3.5 rounded-2xl space-y-2.5 shadow-card-lg ${surface}`}>
+
+        {/* ── Top bar: title + mode pill + action ── */}
+        <div className="flex items-center justify-between border-b pb-2.5 gap-2"
+          style={{ borderColor: isDark ? 'rgba(34,211,238,0.1)' : '#e2e8f0' }}
+        >
           <div className="flex items-center space-x-2.5 min-w-0">
-            <div className={`p-1.5 rounded-xl border shrink-0 ${isNavigating ? 'bg-emerald-50 text-[#1e8e3e] border-emerald-200' : 'bg-blue-50 text-[#1a73e8] border-blue-200'}`}>
+            <div className={`p-1.5 rounded-xl border shrink-0 ${
+              isNavigating
+                ? 'bg-success/10 text-success border-success/20'
+                : 'bg-primary/10 text-primary border-primary/20'
+            }`}>
               <Navigation className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#5f6368] flex items-center gap-1.5">
-                <span>{isNavigating ? (navMode === 'simulator' ? 'VIRTUAL DRIVE SIMULATOR' : 'HARDWARE GPS LIVE') : 'ROUTE PLAN OVERVIEW'}</span>
+              <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${metricLabel}`}>
+                <span>
+                  {isNavigating
+                    ? (navMode === 'simulator' ? 'Virtual Drive' : 'GPS Live')
+                    : 'Route Overview'}
+                </span>
                 {isNavigating && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1e8e3e] animate-pulse"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                 )}
               </div>
-              <div className="text-xs font-bold text-[#202124] truncate">
-                {vehicleName}
-              </div>
+              <div className="text-xs font-bold truncate">{vehicleName}</div>
             </div>
           </div>
 
-          {/* Right Action & Mode Selector */}
           <div className="flex items-center gap-1.5 shrink-0">
-            
-            {/* Mode Switch Pill: Simulator vs GPS */}
-            <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-[#dadce0] text-[11px]">
+            {/* Mode pill */}
+            <div className={`flex items-center p-0.5 rounded-lg text-[11px] ${pillBase}`}>
               <button
                 onClick={() => setNavMode('simulator')}
                 className={`px-2 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  navMode === 'simulator'
-                    ? 'bg-white text-[#1a73e8] shadow-xs font-semibold'
-                    : 'text-[#5f6368] hover:text-[#202124]'
+                  navMode === 'simulator' ? pillActive : pillInactive
                 }`}
-                title="Virtual Drive Simulator (Smooth automated drive along polyline)"
+                title="Virtual Drive Simulator"
               >
                 <Cpu className="w-3 h-3" />
                 <span className="hidden sm:inline">Sim</span>
@@ -85,139 +113,161 @@ export default function SimulatorControl({
               <button
                 onClick={() => setNavMode('deviceGps')}
                 className={`px-2 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${
-                  navMode === 'deviceGps'
-                    ? 'bg-white text-[#1e8e3e] shadow-xs font-semibold'
-                    : 'text-[#5f6368] hover:text-[#202124]'
+                  navMode === 'deviceGps' ? pillActive : pillInactive
                 }`}
-                title="Real-Time Hardware GPS Mode (uses device motion in car)"
+                title="Live Hardware GPS"
               >
                 <Radio className="w-3 h-3" />
                 <span className="hidden sm:inline">GPS</span>
               </button>
             </div>
 
-            {/* Start / Exit Navigation Action Button */}
+            {/* Mobile Plan Button */}
+            {onOpenMobilePlan && !isNavigating && (
+              <button
+                onClick={onOpenMobilePlan}
+                className="md:hidden px-2.5 py-1.5 rounded-full border border-surface-border bg-surface-subtle text-ink font-semibold text-xs flex items-center gap-1 cursor-pointer active:scale-95"
+                title="Edit Route / Vehicle"
+              >
+                <Sliders className="w-3 h-3 text-primary" />
+                <span className="text-[11px]">Plan</span>
+              </button>
+            )}
+
+            {/* Start / Exit */}
             {!isNavigating ? (
               <button
                 onClick={onStartNavigation}
-                className="px-3.5 py-1.5 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold text-xs rounded-full shadow-sm hover:shadow transition-all flex items-center space-x-1 cursor-pointer active:scale-95"
+                className="px-3.5 py-1.5 bg-primary hover:bg-primary-700 text-white font-semibold text-xs rounded-full shadow-sm transition-all flex items-center space-x-1 active:scale-95 cursor-pointer"
               >
                 <Play className="w-3 h-3 fill-current" />
-                <span>START NAV</span>
+                <span>START</span>
               </button>
             ) : (
               <button
                 onClick={onExitNavigation}
-                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 font-semibold text-xs rounded-full transition-all flex items-center space-x-1 cursor-pointer"
+                className="px-3 py-1.5 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 font-semibold text-xs rounded-full transition-all flex items-center space-x-1 cursor-pointer"
               >
                 <Square className="w-3 h-3 fill-current" />
                 <span>EXIT</span>
               </button>
             )}
-
           </div>
-
         </div>
 
-        {/* Simulator Cockpit Controls (Visible When Navigating in Simulator Mode) */}
+        {/* ── Simulator cockpit controls ── */}
         {isNavigating && navMode === 'simulator' && (
-          <div className="flex items-center justify-between bg-blue-50/60 p-2 rounded-xl border border-blue-100 text-xs">
-            
-            {/* Play / Pause & Restart */}
+          <div className={`flex items-center justify-between p-2 rounded-xl border text-xs ${
+            isDark ? 'bg-[#1a2035] border-[rgba(34,211,238,0.1)]' : 'bg-primary/5 border-primary/10'
+          }`}>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setIsSimPaused(!isSimPaused)}
                 className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 border transition-all ${
                   isSimPaused
-                    ? 'bg-[#1a73e8] text-white border-[#1a73e8]'
-                    : 'bg-white text-[#202124] border-[#dadce0] hover:bg-slate-50'
+                    ? 'bg-primary text-white border-primary'
+                    : isDark
+                      ? 'bg-[#0b0f19] text-[#e2e8f0] border-[rgba(34,211,238,0.15)] hover:bg-[#1a2035]'
+                      : 'bg-white text-ink border-surface-border hover:bg-surface-subtle'
                 }`}
               >
-                {isSimPaused ? <Play className="w-3 h-3 fill-current" /> : <Pause className="w-3 h-3 fill-current" />}
+                {isSimPaused
+                  ? <Play className="w-3 h-3 fill-current" />
+                  : <Pause className="w-3 h-3 fill-current" />}
                 <span>{isSimPaused ? 'Resume' : 'Pause'}</span>
               </button>
-              
               <button
                 onClick={onResetSimulation}
-                className="p-1.5 bg-white text-[#5f6368] hover:text-[#202124] border border-[#dadce0] rounded-lg hover:bg-slate-50 transition-colors"
-                title="Restart simulation from beginning"
+                className={`p-1.5 rounded-lg transition-colors border ${
+                  isDark
+                    ? 'bg-[#0b0f19] text-[#94a3b8] border-[rgba(34,211,238,0.15)] hover:text-[#e2e8f0]'
+                    : 'bg-white text-ink-secondary border-surface-border hover:bg-surface-subtle'
+                }`}
+                title="Restart simulation"
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
             </div>
 
-            {/* Speed Multiplier Pills */}
+            {/* Speed pills */}
             <div className="flex items-center gap-1">
-              <span className="text-[10px] text-[#5f6368] font-bold uppercase mr-1 hidden sm:inline">Speed:</span>
-              {[1, 5, 15, 30].map((spd) => (
+              <span className={`text-[10px] font-bold uppercase mr-1 hidden sm:inline ${metricLabel}`}>
+                Speed:
+              </span>
+              {[1, 5, 15, 30].map(spd => (
                 <button
                   key={spd}
                   onClick={() => setSimSpeedMultiplier(spd)}
                   className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all border ${
                     simSpeedMultiplier === spd
-                      ? 'bg-[#1a73e8] text-white border-[#1a73e8]'
-                      : 'bg-white text-[#5f6368] border-[#dadce0] hover:bg-slate-50'
+                      ? 'bg-primary text-white border-primary'
+                      : isDark
+                        ? 'bg-[#0b0f19] text-[#94a3b8] border-[rgba(34,211,238,0.1)] hover:text-[#e2e8f0]'
+                        : 'bg-white text-ink-secondary border-surface-border hover:bg-surface-subtle'
                   }`}
                 >
                   {spd}x
                 </button>
               ))}
             </div>
-
           </div>
         )}
 
-        {/* Live Metrics Grid */}
+        {/* ── Live metrics grid ── */}
         <div className="grid grid-cols-3 gap-2 text-center">
-          
-          {/* Speedometer */}
-          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
-            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
-              <Gauge className="w-3 h-3 text-[#1e8e3e]" /> Speed
+
+          {/* Speed */}
+          <div className={`p-2 rounded-xl border ${metricTile}`}>
+            <div className={`text-[9px] font-bold uppercase flex items-center justify-center gap-1 ${metricLabel}`}>
+              <Gauge className="w-3 h-3 text-success" /> Speed
             </div>
-            <div className="text-base font-bold text-[#1e8e3e] font-mono mt-0.5">
-              {liveSpeed} <span className="text-[9px] font-normal text-[#5f6368]">km/h</span>
+            <div className="text-base font-bold text-success font-mono mt-0.5">
+              {liveSpeed} <span className={`text-[9px] font-normal ${metricLabel}`}>km/h</span>
             </div>
           </div>
 
-          {/* Odometer */}
-          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
-            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
-              <Compass className="w-3 h-3 text-[#1a73e8]" /> Distance
+          {/* Distance */}
+          <div className={`p-2 rounded-xl border ${metricTile}`}>
+            <div className={`text-[9px] font-bold uppercase flex items-center justify-center gap-1 ${metricLabel}`}>
+              <Compass className="w-3 h-3 text-primary" /> Distance
             </div>
-            <div className="text-base font-bold text-[#1a73e8] font-mono mt-0.5">
-              {currentDistance} <span className="text-[9px] font-normal text-[#5f6368]">/ {totalDistance} km</span>
+            <div className="text-base font-bold text-primary font-mono mt-0.5">
+              {currentDistance} <span className={`text-[9px] font-normal ${metricLabel}`}>/ {totalDistance} km</span>
             </div>
           </div>
 
           {/* Battery SOC */}
-          <div className="bg-[#f8f9fa] p-2 rounded-xl border border-[#dadce0]">
-            <div className="text-[9px] font-bold text-[#5f6368] uppercase flex items-center justify-center gap-1">
-              <BatteryCharging className="w-3 h-3 text-[#1e8e3e]" /> Battery SOC
+          <div className={`p-2 rounded-xl border ${metricTile}`}>
+            <div className={`text-[9px] font-bold uppercase flex items-center justify-center gap-1 ${metricLabel}`}>
+              <BatteryCharging className="w-3 h-3" style={{ color: socColor }} /> SOC
             </div>
-            <div className="text-base font-bold text-[#1e8e3e] font-mono mt-0.5">
+            <div className="text-base font-bold font-mono mt-0.5" style={{ color: socColor }}>
               {currentSoc}%
             </div>
           </div>
 
         </div>
 
-        {/* Progress Bar & Next Charging Stop Info */}
+        {/* ── Progress bar + next stop ── */}
         <div className="space-y-1 pt-0.5">
-          <div className="flex items-center justify-between text-[10px] text-[#5f6368]">
-            <span className="font-semibold text-[#202124]">{progressPercent}% Completed</span>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className={`font-semibold ${isDark ? 'text-[#e2e8f0]' : 'text-ink'}`}>
+              {progressPercent}% Completed
+            </span>
             {nextStop ? (
-              <span className="flex items-center gap-1 font-medium text-[#1e8e3e]">
-                <Zap className="w-3 h-3 fill-current text-[#1e8e3e]" />
-                <span>Next Charge: {nextStop.name.split(',')[0]} (Km {nextStop.distanceFromStartKm})</span>
+              <span className="flex items-center gap-1 font-medium text-success">
+                <Zap className="w-3 h-3 fill-current" />
+                <span>Next: {nextStop.name.split(',')[0]} (Km {nextStop.distanceFromStartKm})</span>
               </span>
             ) : (
-              <span>Destination Approaching</span>
+              <span className={metricLabel}>Destination Approaching</span>
             )}
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
-            <div 
-              className="bg-[#1a73e8] h-full rounded-full transition-all duration-300"
+          <div className="w-full rounded-full h-1.5 overflow-hidden" style={{
+            background: isDark ? '#1a2035' : '#e2e8f0'
+          }}>
+            <div
+              className="bg-primary h-full rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

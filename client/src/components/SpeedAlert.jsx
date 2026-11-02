@@ -16,21 +16,21 @@ export default function SpeedAlert({ camera }) {
   }, [camera.id]);
 
   return (
-    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 font-sans max-w-sm w-full animate-bounce">
-      <div className="bg-rose-600 text-white p-3 rounded-2xl shadow-2xl border-2 border-white flex items-center space-x-3">
-        <div className="p-2 bg-white text-rose-600 rounded-xl font-black text-sm shrink-0">
+    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 font-sans max-w-sm w-[92%] animate-slide-down">
+      <div className="bg-danger text-white p-3 rounded-2xl shadow-card-lg border border-danger/30 flex items-center space-x-3">
+        <div className="p-2 bg-white text-danger rounded-xl font-black text-sm shrink-0">
           {camera.speedLimit} <span className="text-[9px]">KM/H</span>
         </div>
 
-        <div className="truncate">
-          <div className="text-[10px] font-extrabold uppercase tracking-wider text-rose-200 flex items-center gap-1">
+        <div className="truncate flex-1">
+          <div className="text-[10px] font-extrabold uppercase tracking-wider text-red-200 flex items-center gap-1">
             <AlertTriangle className="w-3 h-3 text-white" />
-            <span>Speed Camera Radar Ahead</span>
+            <span>Speed Radar Detected</span>
           </div>
           <div className="text-xs font-bold truncate">{camera.name} ({camera.distMeters}m away)</div>
         </div>
 
-        <Volume2 className="w-5 h-5 text-white animate-pulse shrink-0 ml-auto" />
+        <Volume2 className="w-4 h-4 text-white animate-pulse shrink-0 ml-auto" />
       </div>
     </div>
   );

@@ -15,9 +15,10 @@ export const bookSlot = async (req, res) => {
 
     // Set 30 minute expiry from now
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    const userId = req.user._id || req.user.id || req.user.userId;
 
     const reservation = new Reservation({
-      userId: req.user.userId,
+      userId,
       stationId,
       stationName,
       operator: operator || 'EV Network',
@@ -48,8 +49,9 @@ export const bookSlot = async (req, res) => {
  */
 export const getMyBookings = async (req, res) => {
   try {
+    const userId = req.user._id || req.user.id || req.user.userId;
     const bookings = await Reservation.find({ 
-      userId: req.user.userId 
+      userId 
     }).sort({ createdAt: -1 });
 
     // Mark expired bookings
@@ -78,9 +80,10 @@ export const getMyBookings = async (req, res) => {
  */
 export const cancelBooking = async (req, res) => {
   try {
+    const userId = req.user._id || req.user.id || req.user.userId;
     const booking = await Reservation.findOne({
       _id: req.params.id,
-      userId: req.user.userId
+      userId
     });
 
     if (!booking) {

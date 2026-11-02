@@ -52,6 +52,7 @@ dist/
 .env.local
 .env.*.local
 client/.env
+server/.env
 
 # Editor and OS
 .DS_Store
@@ -62,3 +63,8 @@ Thumbs.db
 # Vite Cache
 .vite/
 */.vite/
+client/node_modules/.vite/
+client/node_modules/.package-lock.json
+
+# Project exports and Gantt charts
+charge_nova_gantt_chart*

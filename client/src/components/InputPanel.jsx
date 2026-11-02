@@ -1,30 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Zap, 
-  MapPin, 
-  Navigation, 
-  Car, 
-  ShieldCheck, 
-  Gauge, 
-  Loader2,
-  Crosshair,
-  Thermometer,
-  Database,
-  ShieldAlert,
-  QrCode,
-  Search,
-  User,
-  LogIn,
-  ChevronLeft,
-  ChevronRight,
-  Plus
+  Zap, MapPin, Navigation, Car, ShieldCheck, Gauge, 
+  Crosshair, Thermometer, Database, ShieldAlert, QrCode, 
+  Search, User, LogIn, ChevronLeft, ChevronRight, Plus, 
+  Sliders, ChevronDown, Check, Clock, TrendingDown,
+  CheckCircle2, RefreshCw
 } from 'lucide-react';
-import { searchLocation, reverseGeocode, getBestUserLocation } from '../services/nominatimService';
+import { searchLocation, getBestUserLocation } from '../services/nominatimService';
 import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiConfig';
 import { calculateTripCostAndSavings } from '../utils/costSavingsMath';
 import { INDIAN_CPO_NETWORKS } from '../services/openChargeMapService';
 import { fetchLiveWeather } from '../services/weatherService';
+import { useToast } from './Toast';
+import { SkeletonListItem } from './Skeleton';
 
 export const INITIAL_EV_PRESETS = [
   { id: 'nexon', name: 'Tata Nexon EV Max', range: 437, battery: 40.5, plug: 'CCS2' },
@@ -34,7 +23,7 @@ export const INITIAL_EV_PRESETS = [
   { id: 'atto', name: 'BYD Atto 3', range: 521, battery: 60.48, plug: 'CCS2' },
 ];
 
-function WaypointRow({ index, wp, onUpdate, onRemove }) {
+function WaypointRow({ index, wp, onUpdate, onRemove, isDark = false }) {
   const [query, setQuery] = useState(wp.location?.displayName || wp.query || '');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -60,8 +49,8 @@ function WaypointRow({ index, wp, onUpdate, onRemove }) {
   return (
     <div className="space-y-1 relative">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-extrabold flex items-center justify-center shadow-xs">
+        <label className="text-[11px] font-semibold text-ink-secondary flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-warning text-white text-[9px] font-extrabold flex items-center justify-center">
             {index + 1}
           </span>
           <span>Via Stop {index + 1}</span>
@@ -69,7 +58,7 @@ function WaypointRow({ index, wp, onUpdate, onRemove }) {
         <button
           type="button"
           onClick={onRemove}
-          className="text-[10px] text-[#d93025] hover:underline font-semibold cursor-pointer"
+          className="text-[10px] text-danger hover:underline font-semibold cursor-pointer"
         >
           ✕ Remove
         </button>
@@ -83,18 +72,29 @@ function WaypointRow({ index, wp, onUpdate, onRemove }) {
             setQuery(e.target.value);
             onUpdate({ ...wp, query: e.target.value, location: null });
           }}
-          placeholder="Add intermediate town or highway stop"
-          className="w-full bg-white border border-[#dadce0] rounded-lg pl-3 pr-8 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
+          placeholder="Intermediate town or highway stop"
+          className={`w-full rounded-lg pl-3 pr-8 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary border ${
+            isDark 
+              ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] placeholder-[#64748b]' 
+              : 'bg-white border-surface-border text-ink placeholder-ink-tertiary'
+          }`}
         />
-        {isSearching ? (
-          <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin absolute right-2.5 top-2.5" />
-        ) : (
-          <Search className="w-3.5 h-3.5 text-[#5f6368] absolute right-2.5 top-2.5" />
-        )}
+        <Search className="w-3.5 h-3.5 text-ink-tertiary absolute right-2.5 top-2.5" />
       </div>
 
-      {suggestions.length > 0 && !wp.location && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#dadce0] rounded-xl shadow-xl max-h-40 overflow-y-auto z-30 divide-y divide-[#dadce0]">
+      {isSearching && (
+        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+          isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+        }`}>
+          <SkeletonListItem />
+          <SkeletonListItem />
+        </div>
+      )}
+
+      {suggestions.length > 0 && !wp.location && !isSearching && (
+        <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+          isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+        }`}>
           {suggestions.map((item, idx) => (
             <button
               key={idx}
@@ -105,9 +105,11 @@ function WaypointRow({ index, wp, onUpdate, onRemove }) {
                 setSuggestions([]);
                 onUpdate({ ...wp, location: loc, query: item.displayName });
               }}
-              className="w-full text-left px-2.5 py-2 text-[11px] text-[#202124] hover:bg-slate-50 flex items-start space-x-2 cursor-pointer"
+              className={`w-full text-left px-2.5 py-2 text-[11px] flex items-start space-x-2 cursor-pointer ${
+                isDark ? 'text-[#e2e8f0] hover:bg-[#1a2035]' : 'text-ink hover:bg-surface-subtle'
+              }`}
             >
-              <MapPin className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
+              <MapPin className="w-3 h-3 text-warning mt-0.5 shrink-0" />
               <span className="truncate">{item.displayName}</span>
             </button>
           ))}
@@ -116,7 +118,6 @@ function WaypointRow({ index, wp, onUpdate, onRemove }) {
     </div>
   );
 }
-
 
 export default function InputPanel({
   onPlanRoute,
@@ -157,8 +158,11 @@ export default function InputPanel({
   waypoints = [],
   setWaypoints,
   selectedNetwork = 'All Networks',
-  setSelectedNetwork
+  setSelectedNetwork,
+  isDark = false,
+  onCloseMobilePlan,
 }) {
+  const toast = useToast();
   const [sourceQuery, setSourceQuery] = useState(sourceLocation?.displayName || 'New Delhi');
   const [destQuery, setDestQuery] = useState(destLocation?.displayName || 'Jaipur, Rajasthan');
   const [sourceSuggestions, setSourceSuggestions] = useState([]);
@@ -170,8 +174,9 @@ export default function InputPanel({
   const [savedTrips, setSavedTrips] = useState([]);
   const [showSavedTrips, setShowSavedTrips] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Live Highway Weather State (Open-Meteo)
+  // Live Highway Weather State
   const [weatherData, setWeatherData] = useState(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
 
@@ -217,9 +222,7 @@ export default function InputPanel({
       if (response.data?.data) {
         setSavedTrips(response.data.data);
       }
-    } catch (err) {
-      console.log('MongoDB server offline, using local session memory');
-    }
+    } catch (err) {}
   };
 
   useEffect(() => {
@@ -232,12 +235,12 @@ export default function InputPanel({
 
   const handleSaveTripToMongo = async () => {
     if (!routeData || !sourceLocation || !destLocation) {
-      alert('Please calculate a valid route first.');
+      toast.warning('Please calculate a valid highway route first.');
       return;
     }
 
     if (!user || !token) {
-      alert('Please sign in or create an account to save trips to your personal dashboard.');
+      toast.info('Sign in to save corridors to your personal dashboard.');
       if (onOpenAuthModal) onOpenAuthModal();
       return;
     }
@@ -259,14 +262,12 @@ export default function InputPanel({
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert(`⚡ Trip saved to ${user?.name ? user.name.split(' ')[0] + "'s" : 'your'} personal account successfully!`);
+      toast.success('Corridor saved to your account!');
       fetchSavedTrips();
     } catch (error) {
-      console.error('Save Trip Error:', error);
-      alert('Failed to save trip: ' + (error.response?.data?.error || error.message));
+      toast.error('Failed to save trip: ' + (error.response?.data?.error || error.message));
     }
   };
-
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -301,9 +302,9 @@ export default function InputPanel({
       if (onUseCurrentLocation) {
         onUseCurrentLocation(locationData);
       }
+      toast.success('Found current location');
     } catch (error) {
-      console.error('Error fetching live location:', error);
-      alert('Could not access live GPS location.');
+      toast.error('Could not access live GPS location.');
     } finally {
       setIsLocatingUser(false);
     }
@@ -317,16 +318,33 @@ export default function InputPanel({
     }
   };
 
-  // Minimal Collapsed Floating Google Search Pill Mode
+  // Surface tokens
+  const panelBg = isDark 
+    ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0]' 
+    : 'bg-white border-surface-border text-ink';
+
+  const cardSurface = isDark
+    ? 'bg-[#111827] border-[rgba(34,211,238,0.12)]'
+    : 'bg-surface-muted border-surface-border';
+
+  const inputClass = isDark
+    ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] placeholder-[#64748b] focus:border-primary'
+    : 'bg-white border-surface-border text-ink placeholder-ink-tertiary focus:border-primary';
+
+  // Minimal Collapsed Floating Pill Mode
   if (isCollapsed) {
     return (
       <div 
-        className="fixed top-4 left-4 z-20 font-sans animate-in fade-in duration-200"
+        className="fixed top-4 left-4 z-20 font-sans"
         style={{ zIndex: 9995 }}
       >
-        <div className="bg-white/95 backdrop-blur-md border border-[#dadce0] p-1.5 px-3 rounded-full shadow-lg flex items-center space-x-2 text-[#202124]">
+        <div className={`p-1.5 px-3 rounded-full shadow-card-md flex items-center space-x-2 border backdrop-blur-md ${
+          isDark 
+            ? 'bg-[#0b0f19]/90 border-[rgba(34,211,238,0.2)] text-[#e2e8f0]' 
+            : 'bg-white/95 border-surface-border text-ink'
+        }`}>
           <div 
-            className="p-1.5 bg-[#1a73e8] text-white rounded-full cursor-pointer shadow-xs"
+            className="p-1.5 bg-primary text-white rounded-full cursor-pointer shadow-card"
             onClick={() => setIsCollapsed(false)}
             title="Expand Route Planner"
           >
@@ -336,16 +354,20 @@ export default function InputPanel({
             className="text-xs font-semibold cursor-pointer max-w-[190px] sm:max-w-xs truncate"
             onClick={() => setIsCollapsed(false)}
           >
-            <span className="text-[#1a73e8]">{sourceLocation?.city || 'Origin'}</span>
+            <span className="text-primary">{sourceLocation?.city || 'Origin'}</span>
             {waypoints?.filter(w => w.location).length > 0 && (
-              <span className="text-amber-600 font-bold mx-1">+{waypoints.filter(w => w.location).length} via</span>
+              <span className="text-warning font-bold mx-1">+{waypoints.filter(w => w.location).length}</span>
             )}
-            <span className="text-[#5f6368] mx-1">➔</span>
-            <span className="text-[#1e8e3e]">{destLocation?.city || 'Destination'}</span>
+            <span className="text-ink-tertiary mx-1">➔</span>
+            <span className="text-success">{destLocation?.city || 'Destination'}</span>
           </div>
           <button
             onClick={() => setIsCollapsed(false)}
-            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-[#202124] text-[11px] font-bold rounded-full transition-all border border-slate-200 flex items-center gap-0.5 cursor-pointer"
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all border flex items-center gap-0.5 cursor-pointer ${
+              isDark 
+                ? 'bg-[#1a2035] text-[#e2e8f0] border-[rgba(34,211,238,0.15)] hover:bg-[#22d3ee]/10' 
+                : 'bg-surface-subtle text-ink border-surface-border hover:bg-slate-200'
+            }`}
           >
             <span>Edit</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -355,20 +377,35 @@ export default function InputPanel({
     );
   }
 
+  // Calculated route quick metrics
+  const tripHours = routeData ? Math.floor(routeData.durationMins / 60) : 0;
+  const tripMins = routeData ? routeData.durationMins % 60 : 0;
+  const costPreview = routeData ? calculateTripCostAndSavings(routeData.distanceKm) : null;
+
   return (
-    <aside className="w-full md:w-[400px] h-full bg-white border-r border-[#dadce0] flex flex-col z-20 shadow-md relative font-sans text-[#202124]">
+    <aside className={`w-full md:w-[380px] h-full border-r flex flex-col z-20 shadow-card-md relative font-sans transition-colors ${panelBg}`}>
       
-      {/* Header - Google Maps Style */}
-      <div className="p-3.5 border-b border-[#dadce0] bg-white flex items-center justify-between">
-        <div className="flex items-center space-x-2.5 cursor-pointer" onClick={onReturnToLanding}>
-          <div className="p-2 bg-[#1a73e8] text-white rounded-xl shadow-sm font-bold">
-            <Zap className="w-4 h-4 fill-current" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold tracking-tight text-[#202124]">
-              Charge Nova
-            </h1>
-            <p className="text-[10px] text-[#5f6368] font-medium">EV Highway Directions</p>
+      {/* Header */}
+      <div className={`p-3.5 border-b flex items-center justify-between ${isDark ? 'border-[rgba(34,211,238,0.12)] bg-[#0b0f19]' : 'border-surface-border bg-white'}`}>
+        <div className="flex items-center space-x-2">
+          {onCloseMobilePlan && (
+            <button
+              onClick={onCloseMobilePlan}
+              className="md:hidden px-2.5 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold flex items-center gap-1 cursor-pointer mr-1"
+              title="Return to Map"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Map</span>
+            </button>
+          )}
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={onReturnToLanding}>
+            <div className="p-2 bg-primary text-white rounded-xl shadow-card font-bold">
+              <Zap className="w-4 h-4 fill-current" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold tracking-tight">Charge Nova</h1>
+              <p className="text-[10px] text-ink-secondary font-medium">EV Highway Directions</p>
+            </div>
           </div>
         </div>
         
@@ -376,8 +413,12 @@ export default function InputPanel({
           {user ? (
             <button
               onClick={onOpenDashboard}
-              className="px-2.5 py-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#1a73e8] rounded-full border border-[#dadce0] transition-all text-xs font-semibold flex items-center gap-1 shadow-sm"
-              title="Account Dashboard & Trip Analytics"
+              className={`px-2.5 py-1.5 rounded-full border text-xs font-semibold flex items-center gap-1 shadow-card transition-all ${
+                isDark 
+                  ? 'bg-[#1a2035] border-[rgba(34,211,238,0.2)] text-primary hover:bg-[#22d3ee]/10' 
+                  : 'bg-surface-muted border-surface-border text-primary hover:bg-surface-subtle'
+              }`}
+              title="Account Dashboard"
             >
               <User className="w-3.5 h-3.5" />
               <span className="max-w-[70px] truncate">{(user?.name || 'Account').split(' ')[0]}</span>
@@ -385,34 +426,46 @@ export default function InputPanel({
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="px-2.5 py-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] rounded-full border border-[#dadce0] transition-all text-xs font-medium flex items-center gap-1 shadow-sm"
-              title="Sign In / Register Account"
+              className={`px-2.5 py-1.5 rounded-full border text-xs font-medium flex items-center gap-1 shadow-card transition-all ${
+                isDark 
+                  ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-[#e2e8f0]' 
+                  : 'bg-surface-muted border-surface-border text-ink-secondary hover:text-ink'
+              }`}
+              title="Sign In"
             >
-              <LogIn className="w-3.5 h-3.5 text-[#1a73e8]" />
+              <LogIn className="w-3.5 h-3.5 text-primary" />
               <span>Sign In</span>
             </button>
           )}
 
           <button
             onClick={onOpenSosModal}
-            className="p-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] rounded-full border border-red-200 transition-all text-xs font-bold"
-            title="24x7 EV Emergency Helpline"
+            className="p-1.5 bg-danger/10 hover:bg-danger/20 text-danger rounded-full border border-danger/20 transition-all text-xs font-bold"
+            title="Emergency SOS"
           >
-            <ShieldAlert className="w-4 h-4 text-[#d93025]" />
+            <ShieldAlert className="w-4 h-4" />
           </button>
 
           <button
             onClick={() => setShowSavedTrips(!showSavedTrips)}
-            className="p-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#1a73e8] rounded-full border border-[#dadce0] transition-all text-xs font-semibold"
-            title="View MongoDB Saved Trips"
+            className={`p-1.5 rounded-full border transition-all text-xs font-semibold ${
+              isDark 
+                ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-primary' 
+                : 'bg-surface-muted border-surface-border text-primary hover:bg-surface-subtle'
+            }`}
+            title="Saved Trips"
           >
             <Database className="w-4 h-4" />
           </button>
 
           <button
             onClick={() => setIsCollapsed(true)}
-            className="p-1.5 bg-[#f8f9fa] hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] rounded-full border border-[#dadce0] transition-all"
-            title="Collapse panel to view full map"
+            className={`p-1.5 rounded-full border transition-all ${
+              isDark 
+                ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-ink-secondary hover:text-[#e2e8f0]' 
+                : 'bg-surface-muted border-surface-border text-ink-secondary hover:text-ink hover:bg-surface-subtle'
+            }`}
+            title="Collapse panel"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -424,22 +477,22 @@ export default function InputPanel({
         
         {/* Saved Trips Drawer */}
         {showSavedTrips && (
-          <div className="bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0] space-y-2 animate-in fade-in duration-200 shadow-sm">
-            <div className="flex justify-between items-center text-xs font-bold text-[#202124]">
-              <span className="flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-[#1a73e8]" /> 
+          <div className={`p-3 rounded-xl border space-y-2 shadow-card ${cardSurface}`}>
+            <div className="flex justify-between items-center text-xs font-bold">
+              <span className="flex items-center gap-1.5 text-primary">
+                <Database className="w-3.5 h-3.5" /> 
                 {user ? `${(user.name || 'Account').split(' ')[0]}'s Saved Trips` : 'Saved Trips'}
               </span>
-              <button onClick={() => setShowSavedTrips(false)} className="text-[#5f6368] hover:text-[#202124] cursor-pointer">✕</button>
+              <button onClick={() => setShowSavedTrips(false)} className="text-ink-secondary hover:text-ink">✕</button>
             </div>
             {!user ? (
-              <div className="p-3 text-center bg-white rounded-lg border border-[#dadce0] space-y-2">
-                <p className="text-[11px] text-[#5f6368]">Sign in to access your personal saved routes.</p>
+              <div className={`p-3 text-center rounded-lg border space-y-2 ${isDark ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border'}`}>
+                <p className="text-[11px] text-ink-secondary">Sign in to access your personal saved routes.</p>
                 <button
                   onClick={() => { setShowSavedTrips(false); if (onOpenAuthModal) onOpenAuthModal(); }}
-                  className="px-3 py-1 bg-[#1a73e8] hover:bg-[#1557b0] text-white text-[11px] font-semibold rounded-full shadow-sm cursor-pointer transition-all"
+                  className="px-3 py-1 bg-primary hover:bg-primary-700 text-white text-[11px] font-semibold rounded-full shadow-card transition-all"
                 >
-                  Sign In / Sign Up
+                  Sign In
                 </button>
               </div>
             ) : savedTrips.length > 0 ? (
@@ -457,38 +510,67 @@ export default function InputPanel({
                         onSelectSavedTrip(src, dst);
                       }
                     }}
-                    className="w-full text-left p-2 bg-white hover:bg-blue-50 rounded-lg text-[11px] flex justify-between items-center text-[#202124] border border-[#dadce0] transition-colors cursor-pointer"
+                    className={`w-full text-left p-2 rounded-lg text-[11px] flex justify-between items-center border transition-colors cursor-pointer ${
+                      isDark 
+                        ? 'bg-[#0b0f19] hover:bg-[#1a2035] border-[rgba(34,211,238,0.1)] text-[#e2e8f0]' 
+                        : 'bg-white hover:bg-primary/5 border-surface-border text-ink'
+                    }`}
                   >
                     <span className="truncate font-medium max-w-[210px]">{t.title || `${t.sourceName} ➔ ${t.destName}`}</span>
-                    <span className="text-[#1a73e8] font-mono font-bold shrink-0">{t.distanceKm} km</span>
+                    <span className="text-primary font-mono font-bold shrink-0">{t.distanceKm} km</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-[11px] text-[#5f6368] p-2 bg-white rounded-lg border border-[#dadce0] text-center">
+              <div className={`text-[11px] text-ink-secondary p-2 rounded-lg border text-center ${isDark ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border'}`}>
                 No trips saved to your account yet.
               </div>
             )}
           </div>
         )}
 
+        {/* Calculated Route Mini-Summary (If route is present) */}
+        {routeData && (
+          <div className={`p-3 rounded-xl border space-y-1.5 shadow-card ${
+            isDark ? 'bg-primary/10 border-primary/20 text-[#e2e8f0]' : 'bg-primary/5 border-primary/20 text-ink'
+          }`}>
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-primary flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Route Optimized
+              </span>
+              <span className="font-mono text-primary font-bold">{routeData.distanceKm} km</span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-ink-secondary">
+              <span>{tripHours}h {tripMins}m driving • {smartHalts.length} halt{smartHalts.length !== 1 ? 's' : ''}</span>
+              {costPreview && <span className="font-semibold text-success">Save ₹{costPreview.savedCostINR}</span>}
+            </div>
+          </div>
+        )}
 
-        {/* EV Model Preset */}
-        <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
-          <div className="flex items-center justify-between text-xs font-bold text-[#5f6368] uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><Car className="w-3.5 h-3.5 text-[#1a73e8]" /> EV Vehicle</span>
+        {/* EV Model Selection */}
+        <div className={`space-y-1.5 p-3 rounded-xl border ${cardSurface}`}>
+          <div className="flex items-center justify-between text-xs font-bold text-ink-secondary uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-primary"><Car className="w-3.5 h-3.5" /> EV Vehicle</span>
             <div className="flex items-center space-x-1">
               <button
                 onClick={onOpenBatteryHealthModal}
-                className="text-[10px] text-[#1a73e8] hover:underline font-semibold bg-white px-2 py-0.5 rounded border border-[#dadce0]"
-                title="View Battery Health (SOH) Degradation"
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${
+                  isDark 
+                    ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] hover:text-primary' 
+                    : 'bg-white border-surface-border text-primary hover:underline'
+                }`}
+                title="Battery Health Degradation Curves"
               >
                 Battery Health
               </button>
               <button
                 onClick={onOpenCustomVehicleModal}
-                className="text-[10px] text-[#202124] hover:text-[#1a73e8] font-semibold bg-white px-2 py-0.5 rounded border border-[#dadce0]"
-                title="Add Custom EV Model"
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors ${
+                  isDark 
+                    ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] hover:text-primary' 
+                    : 'bg-white border-surface-border text-ink hover:text-primary'
+                }`}
+                title="Add Custom EV"
               >
                 + Custom
               </button>
@@ -498,7 +580,7 @@ export default function InputPanel({
           <select
             value={selectedVehicle.id}
             onChange={handleVehicleChange}
-            className="w-full bg-white border border-[#dadce0] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#202124] focus:outline-none focus:border-[#1a73e8] cursor-pointer"
+            className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary border cursor-pointer ${inputClass}`}
           >
             {evPresetsList.map((preset) => (
               <option key={preset.id} value={preset.id}>
@@ -508,55 +590,27 @@ export default function InputPanel({
           </select>
         </div>
 
-        {/* Preferred CPO Network Filter (India) */}
-        <div className="space-y-1.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
-          <div className="flex items-center justify-between text-xs font-bold text-[#5f6368] uppercase tracking-wider">
-            <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> CPO Network Filter
-            </span>
-            <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              🇮🇳 India
-            </span>
-          </div>
-          <select
-            value={selectedNetwork || 'All Networks'}
-            onChange={(e) => setSelectedNetwork && setSelectedNetwork(e.target.value)}
-            className="w-full bg-white border border-[#dadce0] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#202124] focus:outline-none focus:border-[#1a73e8] cursor-pointer"
-          >
-            {INDIAN_CPO_NETWORKS.map((network) => (
-              <option key={network} value={network}>
-                {network}
-              </option>
-            ))}
-          </select>
-          <p className="text-[10px] text-[#5f6368]">
-            Filters highway fast-chargers prioritizing selected charging provider.
-          </p>
-        </div>
-
-        {/* Source & Destination Search - Classic Directions Style */}
-        <div className="space-y-2.5 bg-[#f8f9fa] p-3.5 rounded-xl border border-[#dadce0]">
+        {/* Source & Destination Search */}
+        <div className={`space-y-2.5 p-3.5 rounded-xl border ${cardSurface}`}>
           
-          {/* Starting Location */}
+          {/* Origin */}
           <div className="space-y-1 relative">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#1e8e3e]" /> Origin
+              <label className="text-[11px] font-semibold text-ink-secondary flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-success" /> Origin
               </label>
               
               <button
                 onClick={handleFetchCurrentLocation}
                 disabled={isLocatingUser}
-                className="text-[10px] font-semibold text-[#1a73e8] hover:underline flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-[#dadce0]"
+                className={`text-[10px] font-semibold flex items-center gap-1 px-1.5 py-0.5 rounded border transition-all ${
+                  isDark 
+                    ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-primary hover:bg-[#1a2035]' 
+                    : 'bg-white border-surface-border text-primary hover:underline'
+                }`}
               >
-                {isLocatingUser ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <>
-                    <Crosshair className="w-3 h-3 text-[#1a73e8]" />
-                    <span>My Location</span>
-                  </>
-                )}
+                <Crosshair className="w-3 h-3 text-primary" />
+                <span>{isLocatingUser ? 'Locating...' : 'My Location'}</span>
               </button>
             </div>
 
@@ -568,18 +622,25 @@ export default function InputPanel({
                   setSourceQuery(e.target.value);
                   setSourceLocation(null);
                 }}
-                placeholder="Choose starting point or live GPS"
-                className="w-full bg-white border border-[#dadce0] rounded-lg pl-3 pr-8 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
+                placeholder="Choose starting point or GPS"
+                className={`w-full rounded-lg pl-3 pr-8 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary border ${inputClass}`}
               />
-              {isSearchingSource ? (
-                <Loader2 className="w-3.5 h-3.5 text-[#1a73e8] animate-spin absolute right-2.5 top-2.5" />
-              ) : (
-                <Search className="w-3.5 h-3.5 text-[#5f6368] absolute right-2.5 top-2.5" />
-              )}
+              <Search className="w-3.5 h-3.5 text-ink-tertiary absolute right-2.5 top-2.5" />
             </div>
 
-            {sourceSuggestions.length > 0 && !sourceLocation && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#dadce0] rounded-xl shadow-xl max-h-40 overflow-y-auto z-30 divide-y divide-[#dadce0]">
+            {isSearchingSource && (
+              <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+                isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+              }`}>
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </div>
+            )}
+
+            {sourceSuggestions.length > 0 && !sourceLocation && !isSearchingSource && (
+              <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+                isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+              }`}>
                 {sourceSuggestions.map((item, idx) => (
                   <button
                     key={idx}
@@ -592,9 +653,11 @@ export default function InputPanel({
                         onSelectSourceLocation(loc);
                       }
                     }}
-                    className="w-full text-left px-2.5 py-2 text-[11px] text-[#202124] hover:bg-slate-50 flex items-start space-x-2"
+                    className={`w-full text-left px-2.5 py-2 text-[11px] flex items-start space-x-2 cursor-pointer ${
+                      isDark ? 'text-[#e2e8f0] hover:bg-[#1a2035]' : 'text-ink hover:bg-surface-subtle'
+                    }`}
                   >
-                    <MapPin className="w-3 h-3 text-[#1e8e3e] mt-0.5 shrink-0" />
+                    <MapPin className="w-3 h-3 text-success mt-0.5 shrink-0" />
                     <span className="truncate">{item.displayName}</span>
                   </button>
                 ))}
@@ -602,9 +665,9 @@ export default function InputPanel({
             )}
           </div>
 
-          {/* Intermediate Waypoints / Via Stops */}
+          {/* Waypoints */}
           {waypoints && waypoints.length > 0 && (
-            <div className="space-y-2.5 pt-1 border-t border-b border-dashed border-[#dadce0] py-2">
+            <div className={`space-y-2.5 pt-1 border-t border-b border-dashed py-2 ${isDark ? 'border-[rgba(34,211,238,0.15)]' : 'border-surface-border'}`}>
               {waypoints.map((wp, idx) => (
                 <WaypointRow
                   key={idx}
@@ -618,6 +681,7 @@ export default function InputPanel({
                   onRemove={() => {
                     setWaypoints(waypoints.filter((_, i) => i !== idx));
                   }}
+                  isDark={isDark}
                 />
               ))}
             </div>
@@ -634,9 +698,11 @@ export default function InputPanel({
                     setWaypoints([...currentWps, { query: '', location: null }]);
                   }
                 }}
-                className="text-[11px] font-semibold text-[#1a73e8] hover:text-[#1557b0] flex items-center gap-1 cursor-pointer bg-white px-2 py-1 rounded-md border border-[#dadce0] hover:bg-slate-50 transition-all shadow-xs"
+                className={`text-[11px] font-semibold text-primary flex items-center gap-1 cursor-pointer px-2 py-1 rounded-md border transition-all ${
+                  isDark ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] hover:bg-[#1a2035]' : 'bg-white border-surface-border hover:bg-surface-subtle shadow-card'
+                }`}
               >
-                <Plus className="w-3 h-3 text-[#1a73e8]" />
+                <Plus className="w-3 h-3" />
                 <span>+ Add Via Stop ({waypoints ? waypoints.length : 0}/3)</span>
               </button>
             </div>
@@ -644,8 +710,8 @@ export default function InputPanel({
 
           {/* Destination */}
           <div className="space-y-1 relative">
-            <label className="text-[11px] font-semibold text-[#5f6368] flex items-center gap-1">
-              <Navigation className="w-3.5 h-3.5 text-[#d93025]" /> Destination
+            <label className="text-[11px] font-semibold text-ink-secondary flex items-center gap-1">
+              <Navigation className="w-3.5 h-3.5 text-danger" /> Destination
             </label>
             <div className="relative">
               <input
@@ -656,17 +722,24 @@ export default function InputPanel({
                   setDestLocation(null);
                 }}
                 placeholder="Choose destination"
-                className="w-full bg-white border border-[#dadce0] rounded-lg pl-3 pr-8 py-2 text-xs text-[#202124] placeholder-[#5f6368] focus:outline-none focus:border-[#1a73e8] focus:ring-1 focus:ring-[#1a73e8]"
+                className={`w-full rounded-lg pl-3 pr-8 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary border ${inputClass}`}
               />
-              {isSearchingDest ? (
-                <Loader2 className="w-3.5 h-3.5 text-[#d93025] animate-spin absolute right-2.5 top-2.5" />
-              ) : (
-                <Search className="w-3.5 h-3.5 text-[#5f6368] absolute right-2.5 top-2.5" />
-              )}
+              <Search className="w-3.5 h-3.5 text-ink-tertiary absolute right-2.5 top-2.5" />
             </div>
 
-            {destSuggestions.length > 0 && !destLocation && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#dadce0] rounded-xl shadow-xl max-h-40 overflow-y-auto z-30 divide-y divide-[#dadce0]">
+            {isSearchingDest && (
+              <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+                isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+              }`}>
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </div>
+            )}
+
+            {destSuggestions.length > 0 && !destLocation && !isSearchingDest && (
+              <div className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-card-lg max-h-40 overflow-y-auto z-30 divide-y ${
+                isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] divide-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border divide-surface-border'
+              }`}>
                 {destSuggestions.map((item, idx) => (
                   <button
                     key={idx}
@@ -679,9 +752,11 @@ export default function InputPanel({
                         onSelectDestLocation(loc);
                       }
                     }}
-                    className="w-full text-left px-2.5 py-2 text-[11px] text-[#202124] hover:bg-slate-50 flex items-start space-x-2"
+                    className={`w-full text-left px-2.5 py-2 text-[11px] flex items-start space-x-2 cursor-pointer ${
+                      isDark ? 'text-[#e2e8f0] hover:bg-[#1a2035]' : 'text-ink hover:bg-surface-subtle'
+                    }`}
                   >
-                    <Navigation className="w-3 h-3 text-[#d93025] mt-0.5 shrink-0" />
+                    <Navigation className="w-3 h-3 text-danger mt-0.5 shrink-0" />
                     <span className="truncate">{item.displayName}</span>
                   </button>
                 ))}
@@ -690,112 +765,140 @@ export default function InputPanel({
           </div>
         </div>
 
-        {/* Live Highway Weather & Climate Section */}
-        <div className="space-y-2 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold text-[#5f6368] uppercase tracking-wider flex items-center gap-1.5">
-              <Thermometer className="w-3.5 h-3.5 text-[#5f6368]" /> 
-              <span>Live Highway Weather</span>
-            </div>
-            <span className="text-[9px] text-[#1a73e8] font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-              Open-Meteo Live
+        {/* Starting Range Slider (Essential) */}
+        <div className={`space-y-1.5 p-3 rounded-xl border ${cardSurface}`}>
+          <div className="flex justify-between items-center text-[11px] font-semibold">
+            <span className="flex items-center gap-1 text-ink-secondary">
+              <Gauge className="w-3.5 h-3.5 text-success" /> Starting Range
             </span>
+            <span className="text-primary font-bold">{currentRange} km</span>
           </div>
+          <input
+            type="range"
+            min="30"
+            max={selectedVehicle.range}
+            value={currentRange}
+            onChange={(e) => setCurrentRange(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
 
-          {weatherData ? (
-            <div className="bg-white p-2.5 rounded-lg border border-[#dadce0] flex items-center justify-between text-xs shadow-xs">
-              <div className="flex items-center space-x-2">
-                <span className="text-xl">{weatherData.icon}</span>
-                <div>
-                  <div className="font-bold text-[#202124]">
-                    {weatherData.temperature}°C • {weatherData.label}
+        {/* Progressive Disclosure Toggle: Advanced Parameters & Climate */}
+        <div className={`rounded-xl border overflow-hidden ${cardSurface}`}>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="w-full p-3 text-left flex items-center justify-between text-xs font-bold text-ink-secondary hover:text-ink transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-primary" />
+              <span>Advanced Corridor Options & Weather</span>
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180 text-primary' : ''}`} />
+          </button>
+
+          {showAdvanced && (
+            <div className={`p-3 border-t space-y-3 ${isDark ? 'border-[rgba(34,211,238,0.1)]' : 'border-surface-border'}`}>
+              
+              {/* Reserve Buffer Slider */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center text-[11px] font-semibold">
+                  <span className="flex items-center gap-1 text-ink-secondary">
+                    <ShieldCheck className="w-3.5 h-3.5 text-primary" /> Reserve Buffer SOC
+                  </span>
+                  <span className="text-primary font-bold">{minSocBuffer}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="30"
+                  value={minSocBuffer}
+                  onChange={(e) => setMinSocBuffer(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              {/* CPO Network Filter */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-ink-secondary uppercase tracking-wider">
+                  Prioritize CPO Network (India)
+                </label>
+                <select
+                  value={selectedNetwork || 'All Networks'}
+                  onChange={(e) => setSelectedNetwork && setSelectedNetwork(e.target.value)}
+                  className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary border ${inputClass}`}
+                >
+                  {INDIAN_CPO_NETWORKS.map((network) => (
+                    <option key={network} value={network}>
+                      {network}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Live Highway Weather */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-wider flex items-center gap-1">
+                    <Thermometer className="w-3.5 h-3.5" /> Origin Climate
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (sourceLocation?.lat) {
+                        setIsLoadingWeather(true);
+                        const w = await fetchLiveWeather(sourceLocation.lat, sourceLocation.lng);
+                        setWeatherData(w);
+                        if (setAmbientTemp && w.temperature) setAmbientTemp(w.temperature);
+                        setIsLoadingWeather(false);
+                      }
+                    }}
+                    className="text-[10px] text-primary hover:underline font-semibold flex items-center gap-0.5"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isLoadingWeather ? 'animate-spin' : ''}`} /> Refresh
+                  </button>
+                </div>
+
+                {weatherData && (
+                  <div className={`p-2.5 rounded-lg border flex items-center justify-between text-xs ${
+                    isDark ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.1)]' : 'bg-white border-surface-border'
+                  }`}>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">{weatherData.icon}</span>
+                      <div>
+                        <div className="font-bold">{weatherData.temperature}°C • {weatherData.label}</div>
+                        <div className="text-[10px] text-ink-secondary">
+                          Wind: {weatherData.windSpeed} km/h • Load: {weatherData.penaltyPercent > 0 ? `-${weatherData.penaltyPercent}%` : 'Optimal'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-[#5f6368]">
-                    Wind {weatherData.windSpeed} km/h • Range Load: {weatherData.penaltyPercent > 0 ? `-${weatherData.penaltyPercent}%` : 'Optimal'}
+                )}
+
+                {/* Cabin AC mode */}
+                <div className="pt-1">
+                  <div className="text-[10px] font-semibold text-ink-secondary mb-1">Cabin AC Setting</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {['Off', 'Normal AC', 'Max AC'].map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setAcMode(mode)}
+                        className={`py-1 text-[10px] font-semibold rounded-md border transition-all ${
+                          acMode === mode
+                            ? 'bg-primary text-white border-primary shadow-card'
+                            : isDark ? 'bg-[#0b0f19] text-[#94a3b8] border-[rgba(34,211,238,0.15)] hover:text-[#e2e8f0]' : 'bg-white text-ink-secondary border-surface-border hover:bg-surface-subtle'
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={async () => {
-                  if (sourceLocation?.lat) {
-                    setIsLoadingWeather(true);
-                    const w = await fetchLiveWeather(sourceLocation.lat, sourceLocation.lng);
-                    setWeatherData(w);
-                    if (setAmbientTemp && w.temperature) setAmbientTemp(w.temperature);
-                    setIsLoadingWeather(false);
-                  }
-                }}
-                className="text-[10px] text-[#1a73e8] hover:underline font-semibold cursor-pointer shrink-0 ml-1"
-                title="Refresh Live Weather"
-              >
-                {isLoadingWeather ? '...' : '↻ Refresh'}
-              </button>
-            </div>
-          ) : (
-            <div className="text-[11px] text-[#5f6368] bg-white p-2 rounded-lg border border-[#dadce0]">
-              Detecting origin highway weather...
             </div>
           )}
-
-          {/* AC Setting Buttons */}
-          <div className="pt-0.5">
-            <div className="text-[10px] font-semibold text-[#5f6368] mb-1">Cabin AC Setting</div>
-            <div className="grid grid-cols-3 gap-1">
-              {['Off', 'Normal AC', 'Max AC'].map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setAcMode(mode)}
-                  className={`py-1 text-[10px] font-semibold rounded-md border transition-all cursor-pointer ${
-                    acMode === mode
-                      ? 'bg-[#1a73e8] text-white border-[#1a73e8] shadow-sm'
-                      : 'bg-white text-[#5f6368] border-[#dadce0] hover:bg-slate-50'
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Range & Buffer Sliders */}
-        <div className="space-y-2.5 bg-[#f8f9fa] p-3 rounded-xl border border-[#dadce0]">
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[11px] font-semibold">
-              <span className="text-[#3c4043] flex items-center gap-1">
-                <Gauge className="w-3.5 h-3.5 text-[#1e8e3e]" /> Starting Range
-              </span>
-              <span className="text-[#1a73e8] font-bold">{currentRange} km</span>
-            </div>
-            <input
-              type="range"
-              min="30"
-              max={selectedVehicle.range}
-              value={currentRange}
-              onChange={(e) => setCurrentRange(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1a73e8]"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[11px] font-semibold">
-              <span className="text-[#3c4043] flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#1a73e8]" /> Reserve Buffer SOC
-              </span>
-              <span className="text-[#1a73e8] font-bold">{minSocBuffer}%</span>
-            </div>
-            <input
-              type="range"
-              min="5"
-              max="30"
-              value={minSocBuffer}
-              onChange={(e) => setMinSocBuffer(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1a73e8]"
-            />
-          </div>
         </div>
 
         {/* Submit & Action Buttons */}
@@ -803,44 +906,51 @@ export default function InputPanel({
           <button
             onClick={onPlanRoute}
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-semibold rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-primary hover:bg-primary-700 text-white font-semibold rounded-full shadow-card hover:shadow-card-md transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer disabled:opacity-50"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Optimizing Highway Route...</span>
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 fill-current" />
-                <span>Plan Live Highway Route</span>
-              </>
-            )}
+            <Zap className="w-4 h-4 fill-current" />
+            <span>{isLoading ? 'Optimizing Corridor...' : 'Plan Live Highway Route'}</span>
           </button>
 
           {routeData && (
             <div className="grid grid-cols-3 gap-1.5 text-[10px]">
               <button
                 onClick={handleSaveTripToMongo}
-                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all shadow-sm truncate"
+                className={`py-1.5 border rounded-lg font-semibold transition-all shadow-card truncate ${
+                  isDark ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] hover:bg-[#22d3ee]/10' : 'bg-white border-surface-border text-ink hover:bg-surface-subtle'
+                }`}
               >
                 Save Trip
               </button>
 
               <button
                 onClick={onOpenExportModal}
-                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all shadow-sm truncate"
+                className={`py-1.5 border rounded-lg font-semibold transition-all shadow-card truncate ${
+                  isDark ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] hover:bg-[#22d3ee]/10' : 'bg-white border-surface-border text-ink hover:bg-surface-subtle'
+                }`}
               >
                 Export PDF
               </button>
 
               <button
                 onClick={onOpenPassengerQrModal}
-                className="py-1.5 bg-white hover:bg-slate-50 border border-[#dadce0] text-[#3c4043] rounded-lg font-semibold transition-all flex items-center justify-center gap-1 shadow-sm truncate"
+                className={`py-1.5 border rounded-lg font-semibold transition-all flex items-center justify-center gap-1 shadow-card truncate ${
+                  isDark ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-[#e2e8f0] hover:bg-[#22d3ee]/10' : 'bg-white border-surface-border text-ink hover:bg-surface-subtle'
+                }`}
               >
                 <QrCode className="w-3 h-3" /> QR Pass
               </button>
             </div>
+          )}
+
+          {onCloseMobilePlan && (
+            <button
+              onClick={onCloseMobilePlan}
+              className="w-full mt-2.5 py-2.5 bg-primary hover:bg-primary-700 text-white rounded-xl text-xs font-bold md:hidden flex items-center justify-center gap-1.5 shadow-card transition-all cursor-pointer"
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              <span>Done & View on Map</span>
+            </button>
           )}
         </div>
 

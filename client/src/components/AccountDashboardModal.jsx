@@ -1,33 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, 
-  User, 
-  LogOut, 
-  Database, 
-  Zap, 
-  MapPin, 
-  Gauge, 
-  DollarSign, 
-  BarChart3, 
-  Layers, 
-  CheckSquare, 
-  Square, 
-  Calendar, 
-  Trash2, 
-  RotateCw, 
-  Search, 
-  Leaf, 
-  ShieldCheck, 
-  ChevronRight,
-  Car,
-  Clock,
-  Navigation
+  X, User, LogOut, Database, Zap, MapPin, Gauge, 
+  DollarSign, BarChart3, Layers, CheckSquare, Square, 
+  Calendar, Trash2, Search, Leaf, ShieldCheck, 
+  ChevronRight, Car, Clock, Navigation, Download,
+  ArrowUpDown
 } from 'lucide-react';
 import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiConfig';
 import { calculateTripCostAndSavings } from '../utils/costSavingsMath';
+import Skeleton, { SkeletonRow } from './Skeleton';
 
-function BookingCard({ booking, onCancel }) {
+function BookingCard({ booking, onCancel, isDark = false }) {
   const [timeLeft, setTimeLeft] = useState(() => {
     return Math.max(0, Math.floor((new Date(booking.expiresAt) - new Date()) / 1000));
   });
@@ -49,50 +33,54 @@ function BookingCard({ booking, onCancel }) {
     }
   };
 
+  const cardBg = isDark
+    ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-[#e2e8f0]'
+    : 'bg-white border-surface-border text-ink shadow-card';
+
   return (
-    <div className={`p-4 bg-white border rounded-xl space-y-3 shadow-xs transition-all ${
-      isExpired ? 'border-slate-200 opacity-60' : 'border-emerald-300 ring-2 ring-emerald-50'
+    <div className={`p-4 rounded-xl border space-y-3 transition-all ${cardBg} ${
+      isExpired ? 'opacity-60' : 'ring-1 ring-success/20'
     }`}>
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
               {booking.operator || 'EV Network'}
             </span>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
               isExpired 
-                ? 'bg-slate-100 text-slate-500 border-slate-200' 
-                : 'bg-emerald-50 text-[#137333] border-emerald-200'
+                ? isDark ? 'bg-surface-subtle text-ink-tertiary border-surface-border' : 'bg-slate-100 text-slate-500 border-slate-200' 
+                : 'bg-success/10 text-success border-success/20'
             }`}>
               {isExpired ? 'Expired / Released' : 'Held / Active Bay'}
             </span>
           </div>
-          <h4 className="text-sm font-bold text-[#202124] mt-1">{booking.stationName}</h4>
-          <p className="text-[11px] text-[#5f6368]">
+          <h4 className="text-sm font-bold mt-1">{booking.stationName}</h4>
+          <p className="text-[11px] text-ink-secondary">
             {booking.powerKW || 60} kW DC Fast Charger • {booking.connector || 'CCS2'} • ₹{booking.rateINR || 19}/kWh
           </p>
         </div>
 
         <div className="text-right">
-          <div className="text-[10px] text-[#5f6368] font-medium">Bay Passcode</div>
-          <div className="text-sm font-mono font-black text-[#1a73e8] tracking-wider">{booking.code}</div>
+          <div className="text-[10px] text-ink-secondary font-medium">Bay Passcode</div>
+          <div className="text-sm font-mono font-black text-primary tracking-wider">{booking.code}</div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#dadce0]">
+      <div className={`flex items-center justify-between pt-2 border-t ${isDark ? 'border-[rgba(34,211,238,0.1)]' : 'border-surface-border'}`}>
         <div className="flex items-center gap-1.5 text-xs font-semibold">
-          <Clock className={`w-3.5 h-3.5 ${isExpired ? 'text-slate-400' : 'text-[#1e8e3e]'}`} />
+          <Clock className={`w-3.5 h-3.5 ${isExpired ? 'text-ink-tertiary' : 'text-success'}`} />
           {isExpired ? (
-            <span className="text-slate-400">30-min window elapsed</span>
+            <span className="text-ink-tertiary">30-min window elapsed</span>
           ) : (
-            <span className="text-[#137333] font-bold">Holds for next: {mins}m {secs < 10 ? '0' : ''}{secs}s</span>
+            <span className="text-success font-bold">Holds: {mins}m {secs < 10 ? '0' : ''}{secs}s</span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleNavigate}
-            className="px-3 py-1 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+            className="px-3 py-1 bg-primary hover:bg-primary-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shadow-card"
           >
             <Navigation className="w-3 h-3" />
             <span>Navigate</span>
@@ -100,7 +88,7 @@ function BookingCard({ booking, onCancel }) {
           {!isExpired && (
             <button
               onClick={() => onCancel(booking._id || booking.code)}
-              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-lg text-xs font-semibold cursor-pointer"
+              className="px-2.5 py-1 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 rounded-lg text-xs font-semibold cursor-pointer"
             >
               Cancel
             </button>
@@ -111,13 +99,14 @@ function BookingCard({ booking, onCancel }) {
   );
 }
 
-export default function AccountDashboardModal({ user, token, onClose, onLogout, onLoadTripOnMap, onOpenAuthModal }) {
+export default function AccountDashboardModal({ user, token, onClose, onLogout, onLoadTripOnMap, onOpenAuthModal, isDark = false }) {
   const [activeTab, setActiveTab] = useState('trips'); // 'trips' | 'bookings'
   const [trips, setTrips] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTripIds, setSelectedTripIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc' | 'distance-desc' | 'savings-desc'
   const [deletingTripId, setDeletingTripId] = useState(null);
 
   useEffect(() => {
@@ -145,7 +134,6 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
     } catch (e) {
       console.warn('Backend booking fetch notice:', e.message);
     }
-    // Fallback to local storage
     try {
       const local = JSON.parse(localStorage.getItem('charge_nova_active_bookings') || '[]');
       setBookings(local);
@@ -164,7 +152,6 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
       }
     } catch (e) {}
 
-    // Update state and local storage
     setBookings(prev => prev.map(b => (b._id === bookingId || b.code === bookingId) ? { ...b, status: 'Cancelled' } : b));
     try {
       const saved = JSON.parse(localStorage.getItem('charge_nova_active_bookings') || '[]');
@@ -211,7 +198,6 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
       setSelectedTripIds(prev => prev.filter(id => id !== tripId));
     } catch (error) {
       console.error('Error deleting trip:', error);
-      alert('Failed to delete trip: ' + (error.response?.data?.error || error.message));
     } finally {
       setDeletingTripId(null);
     }
@@ -222,28 +208,55 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
       setSelectedTripIds(selectedTripIds.filter(tId => tId !== id));
     } else {
       if (selectedTripIds.length >= 3) {
-        alert('You can compare up to 3 trips side-by-side.');
         return;
       }
       setSelectedTripIds([...selectedTripIds, id]);
     }
   };
 
-  // Filter trips by search query
-  const filteredTrips = trips.filter(t => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (t.title && t.title.toLowerCase().includes(q)) ||
-      (t.sourceName && t.sourceName.toLowerCase().includes(q)) ||
-      (t.destName && t.destName.toLowerCase().includes(q)) ||
-      (t.vehicleName && t.vehicleName.toLowerCase().includes(q))
-    );
-  });
+  // Export Trips as CSV
+  const handleExportCSV = () => {
+    if (!trips.length) return;
+    const headers = 'Title,Origin,Destination,Vehicle,Distance_KM,Duration_Mins,Stops,Saved_INR,Date\n';
+    const rows = trips.map(t => {
+      const costInfo = calculateTripCostAndSavings(t.distanceKm || 0);
+      const netSavings = t.savedCostINR || costInfo.savedCostINR;
+      return `"${t.title || ''}","${t.sourceName || ''}","${t.destName || ''}","${t.vehicleName || ''}",${t.distanceKm || 0},${t.durationMins || 0},${t.stopsCount || 0},${netSavings},"${new Date(t.createdAt).toLocaleDateString()}"`;
+    }).join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `charge_nova_trips_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Sort & filter trips
+  const filteredTrips = trips
+    .filter(t => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (t.title && t.title.toLowerCase().includes(q)) ||
+        (t.sourceName && t.sourceName.toLowerCase().includes(q)) ||
+        (t.destName && t.destName.toLowerCase().includes(q)) ||
+        (t.vehicleName && t.vehicleName.toLowerCase().includes(q))
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'distance-desc') return (b.distanceKm || 0) - (a.distanceKm || 0);
+      if (sortBy === 'savings-desc') {
+        const sA = a.savedCostINR || calculateTripCostAndSavings(a.distanceKm || 0).savedCostINR;
+        const sB = b.savedCostINR || calculateTripCostAndSavings(b.distanceKm || 0).savedCostINR;
+        return sB - sA;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
   const selectedTrips = trips.filter(t => selectedTripIds.includes(t._id));
 
-  // Lifetime user metrics
+  // Lifetime metrics
   const totalDistanceKm = trips.reduce((acc, t) => acc + (t.distanceKm || 0), 0);
   const totalSavedCostINR = trips.reduce((acc, t) => {
     if (t.savedCostINR && t.savedCostINR > 0) return acc + t.savedCostINR;
@@ -251,34 +264,38 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
   }, 0);
   const totalCo2SavedKg = Math.round(totalDistanceKm * 0.135 * 10) / 10;
 
-  // Unauthenticated fallback view
+  const modalBg = isDark
+    ? 'bg-[#111827] border-[rgba(34,211,238,0.2)] text-[#e2e8f0]'
+    : 'bg-white border-surface-border text-ink';
+
+  const surfaceSubtle = isDark
+    ? 'bg-[#1a2035] border-[rgba(34,211,238,0.1)]'
+    : 'bg-surface-muted border-surface-border';
+
+  // Unauthenticated view
   if (!user || !token) {
     return (
       <div 
-        className="fixed inset-0 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
-        style={{ zIndex: 99999 }}
+        className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm z-[99999] font-sans"
       >
-        <div className="bg-white border border-[#dadce0] w-full max-w-md rounded-2xl shadow-2xl p-6 text-center space-y-4">
-          <div className="w-14 h-14 mx-auto bg-blue-50 text-[#1a73e8] rounded-2xl flex items-center justify-center border border-blue-200">
-            <User className="w-7 h-7" />
+        <div className={`border rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-card-lg ${modalBg}`}>
+          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto border border-primary/20">
+            <User className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-[#202124]">Personal Account Dashboard</h3>
-            <p className="text-xs text-[#5f6368] mt-1">Please sign in or create an account to view your saved trips, lifetime savings, and EV stats.</p>
+            <h3 className="text-lg font-bold">Account Dashboard</h3>
+            <p className="text-xs text-ink-secondary mt-1">Sign in to sync saved corridors, track lifetime fuel savings, and manage bookings.</p>
           </div>
-          <div className="flex items-center justify-center space-x-2 pt-2">
+          <div className="flex gap-2">
             <button
-              onClick={() => {
-                onClose();
-                if (onOpenAuthModal) onOpenAuthModal();
-              }}
-              className="px-5 py-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white text-xs font-semibold rounded-full shadow-sm transition-all"
+              onClick={() => { onClose(); if (onOpenAuthModal) onOpenAuthModal(); }}
+              className="flex-1 py-2.5 bg-primary hover:bg-primary-700 text-white text-xs font-semibold rounded-full shadow-card transition-all"
             >
               Sign In / Sign Up
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-[#3c4043] text-xs font-semibold rounded-full transition-all"
+              className={`px-4 py-2.5 border rounded-full text-xs font-semibold ${isDark ? 'border-surface-border text-ink-secondary hover:text-white' : 'border-surface-border text-ink-secondary hover:text-ink'}`}
             >
               Close
             </button>
@@ -288,386 +305,314 @@ export default function AccountDashboardModal({ user, token, onClose, onLogout, 
     );
   }
 
-  const userInitial = (user.name || 'User').charAt(0).toUpperCase();
-
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
-      style={{ zIndex: 99999 }}
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm z-[99999] font-sans"
     >
-      <div className="bg-white border border-[#dadce0] w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col relative text-[#202124]">
-        
-        {/* Header Bar */}
-        <div className="p-4 border-b border-[#dadce0] bg-white flex items-center justify-between">
+      <div className={`border rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-card-lg ${modalBg}`}>
+        {/* Header */}
+        <div className={`p-4 border-b flex items-center justify-between ${isDark ? 'border-[rgba(34,211,238,0.15)] bg-[#0b0f19]' : 'border-surface-border bg-white'}`}>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-[#1a73e8] text-white rounded-full flex items-center justify-center font-bold text-base shadow-sm ring-4 ring-blue-50">
-              {userInitial}
+            <div className="p-2 bg-primary/10 text-primary rounded-xl border border-primary/20 font-bold">
+              <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-[#202124] flex items-center gap-2">
-                <span>{user.name}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-[#1a73e8] border border-blue-200 font-bold uppercase tracking-wider">
-                  Personal Dashboard
-                </span>
-              </h3>
-              <div className="flex items-center gap-2 text-xs text-[#5f6368] mt-0.5">
-                <span>{user.email}</span>
-                {user.defaultVehicle && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1 font-medium text-[#1a73e8]">
-                      <Car className="w-3 h-3" />
-                      {user.defaultVehicle}
-                    </span>
-                  </>
-                )}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold">{user.name}</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">Active Driver</span>
               </div>
+              <p className="text-[11px] text-ink-secondary">{user.email}</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={fetchUserTrips}
-              disabled={isLoading}
-              className="p-1.5 text-[#5f6368] hover:text-[#1a73e8] hover:bg-blue-50 rounded-full transition-colors border border-[#dadce0]"
-              title="Refresh your trips"
-            >
-              <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-[#1a73e8]' : ''}`} />
-            </button>
-
-            <button
               onClick={onLogout}
-              className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-full text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 text-xs text-danger hover:bg-danger/10 border border-danger/20 rounded-full font-semibold transition-all flex items-center gap-1 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Log Out</span>
+              <span>Sign Out</span>
             </button>
-
             <button
               onClick={onClose}
-              className="p-1.5 text-[#5f6368] hover:text-[#202124] hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-              title="Close Dashboard"
+              className="p-1.5 text-ink-secondary hover:text-ink rounded-full transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-[#dadce0] bg-[#f8f9fa] text-xs font-bold px-4">
+        {/* Tab Switcher */}
+        <div className={`flex border-b text-xs font-bold ${isDark ? 'border-[rgba(34,211,238,0.1)] bg-[#0b0f19]' : 'border-surface-border bg-surface-muted'}`}>
           <button
             onClick={() => setActiveTab('trips')}
-            className={`py-2.5 px-4 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+            className={`flex-1 py-2.5 text-center transition-all cursor-pointer border-b-2 flex items-center justify-center gap-1.5 ${
               activeTab === 'trips'
-                ? 'text-[#1a73e8] border-[#1a73e8] bg-white'
-                : 'text-[#5f6368] border-transparent hover:text-[#202124]'
+                ? 'text-primary border-primary bg-transparent font-bold'
+                : 'text-ink-secondary border-transparent hover:text-ink'
             }`}
           >
             <Database className="w-3.5 h-3.5" />
-            <span>Saved Trips & Analytics ({trips.length})</span>
+            <span>Saved Highway Corridors ({trips.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('bookings')}
-            className={`py-2.5 px-4 transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
+            className={`flex-1 py-2.5 text-center transition-all cursor-pointer border-b-2 flex items-center justify-center gap-1.5 ${
               activeTab === 'bookings'
-                ? 'text-[#1a73e8] border-[#1a73e8] bg-white'
-                : 'text-[#5f6368] border-transparent hover:text-[#202124]'
+                ? 'text-primary border-primary bg-transparent font-bold'
+                : 'text-ink-secondary border-transparent hover:text-ink'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span>My Active Bookings / Reserved Slots ({bookings.filter(b => b.status === 'Active' && new Date(b.expiresAt) > new Date()).length})</span>
+            <Zap className="w-3.5 h-3.5" />
+            <span>Charger Bay Holds ({bookings.length})</span>
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          
+        {/* Modal Body */}
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
           {activeTab === 'bookings' ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-[#202124] flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span>My Active 30-Minute Slot Passes</span>
-                  </h4>
-                  <p className="text-xs text-[#5f6368]">
-                    Reserved charger bays with priority passcode held for your vehicle
-                  </p>
+                  <h4 className="text-xs font-bold">Your Active Charger Bay Holds</h4>
+                  <p className="text-[11px] text-ink-secondary">Real-time reservations held with station passcodes</p>
                 </div>
-                <button
-                  onClick={fetchUserBookings}
-                  className="text-xs text-[#1a73e8] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                >
-                  <RotateCw className="w-3.5 h-3.5" />
-                  <span>Refresh Passes</span>
-                </button>
               </div>
 
               {bookings.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {bookings.map((booking, idx) => (
                     <BookingCard
-                      key={booking._id || booking.code || idx}
+                      key={booking._id || idx}
                       booking={booking}
                       onCancel={handleCancelBooking}
+                      isDark={isDark}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center bg-[#f8f9fa] rounded-2xl border border-[#dadce0] space-y-2">
-                  <div className="w-12 h-12 mx-auto bg-amber-50 text-amber-600 rounded-full flex items-center justify-center border border-amber-200">
-                    <Zap className="w-6 h-6 fill-amber-500" />
-                  </div>
-                  <h5 className="font-bold text-xs text-[#202124]">No Active Charging Bay Bookings</h5>
-                  <p className="text-[11px] text-[#5f6368] max-w-sm mx-auto">
-                    Click any recommended station pin on your planned highway route and select <strong>"Reserve 30-Min Fast Slot Free"</strong> to hold your charging gun before arrival.
-                  </p>
+                <div className={`p-8 text-center rounded-xl border text-xs text-ink-secondary ${surfaceSubtle}`}>
+                  No active charger holds currently. Click on any station on the map to reserve a fast bay for 30 minutes free.
                 </div>
               )}
             </div>
           ) : (
             <>
-              {/* Lifetime Analytics Banner (4 Key SaaS Metrics) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            
-            <div className="p-3.5 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
-              <div className="p-2.5 bg-blue-50 text-[#1a73e8] rounded-xl border border-blue-200">
-                <Gauge className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-[#5f6368] tracking-wider">Total Distance</div>
-                <div className="text-lg font-bold text-[#1a73e8] font-mono">{totalDistanceKm} km</div>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
-              <div className="p-2.5 bg-emerald-50 text-[#1e8e3e] rounded-xl border border-emerald-200">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-[#5f6368] tracking-wider">Fuel Saved</div>
-                <div className="text-lg font-bold text-[#1e8e3e] font-mono">₹{totalSavedCostINR.toLocaleString()}</div>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
-              <div className="p-2.5 bg-teal-50 text-teal-600 rounded-xl border border-teal-200">
-                <Leaf className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-[#5f6368] tracking-wider">CO₂ Offset</div>
-                <div className="text-lg font-bold text-teal-700 font-mono">{totalCo2SavedKg} kg</div>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-[#f8f9fa] border border-[#dadce0] rounded-xl flex items-center space-x-3">
-              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl border border-purple-200">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase font-bold text-[#5f6368] tracking-wider">Saved Trips</div>
-                <div className="text-lg font-bold text-[#202124] font-mono">{trips.length} Trips</div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* TRIP COMPARISON SECTION */}
-          {selectedTrips.length > 0 && (
-            <div className="bg-[#f8f9fa] p-4 rounded-xl border border-[#dadce0] space-y-3 animate-in fade-in duration-300">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="w-4 h-4 text-[#1a73e8]" />
-                  <h4 className="font-bold text-xs text-[#202124]">Side-by-Side Trip Comparison ({selectedTrips.length} Selected)</h4>
-                </div>
-                <button
-                  onClick={() => setSelectedTripIds([])}
-                  className="text-xs text-[#1a73e8] hover:underline font-semibold cursor-pointer"
-                >
-                  Clear Selection
-                </button>
+              {/* Lifetime Analytics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Total Distance', val: `${totalDistanceKm} km`, sub: 'EV Highway Cruising', color: 'text-primary' },
+                  { label: 'Lifetime Saved', val: `₹${totalSavedCostINR.toLocaleString()}`, sub: 'vs Petrol ICE Car', color: 'text-success' },
+                  { label: 'CO₂ Prevented', val: `${totalCo2SavedKg} kg`, sub: 'Direct Tailpipe Offset', color: 'text-success' },
+                  { label: 'Corridors Planned', val: trips.length, sub: 'Logged to MongoDB', color: 'text-primary' }
+                ].map(item => (
+                  <div key={item.label} className={`p-3.5 rounded-xl border ${surfaceSubtle}`}>
+                    <div className="text-[10px] text-ink-secondary font-bold uppercase tracking-wider">{item.label}</div>
+                    <div className={`text-xl font-black font-mono mt-1 ${item.color}`}>{item.val}</div>
+                    <div className="text-[9px] text-ink-tertiary mt-0.5">{item.sub}</div>
+                  </div>
+                ))}
               </div>
 
-              {/* Side-by-Side Comparison Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {selectedTrips.map((t, idx) => {
-                  const costInfo = calculateTripCostAndSavings(t.distanceKm || 0);
-                  const estEvCost = t.chargingCostINR || costInfo.evChargingCostINR;
-                  const estPetrolCost = costInfo.petrolFuelCostINR;
-                  const netSavings = t.savedCostINR || costInfo.savedCostINR;
-
-                  return (
-                    <div key={t._id || idx} className="p-3.5 bg-white border border-[#dadce0] rounded-xl space-y-2 shadow-sm">
-                      <div className="text-xs font-bold text-[#1a73e8] truncate">{t.title || `${t.sourceName} ➔ ${t.destName}`}</div>
-                      <div className="text-[11px] text-[#5f6368] font-medium">{t.vehicleName || 'Tata Nexon EV Max'}</div>
-                      <div className="border-t border-[#dadce0] pt-2 space-y-1 text-xs">
-                        <div className="flex justify-between text-[#5f6368]">
-                          <span>Distance:</span>
-                          <span className="font-mono font-bold text-[#202124]">{t.distanceKm} km</span>
+              {/* Side-by-side comparison */}
+              {selectedTrips.length > 1 && (
+                <div className={`p-4 rounded-xl border space-y-3 ${isDark ? 'bg-primary/10 border-primary/20' : 'bg-primary/5 border-primary/20'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <BarChart3 className="w-4 h-4" />
+                      Side-by-Side Corridor Comparison ({selectedTrips.length}/3)
+                    </span>
+                    <button
+                      onClick={() => setSelectedTripIds([])}
+                      className="text-[10px] text-primary hover:underline font-semibold"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {selectedTrips.map(st => {
+                      const costInfo = calculateTripCostAndSavings(st.distanceKm || 0);
+                      return (
+                        <div key={st._id} className={`p-2.5 rounded-lg border text-xs space-y-1 ${isDark ? 'bg-[#111827] border-[rgba(34,211,238,0.15)]' : 'bg-white border-surface-border'}`}>
+                          <div className="font-bold truncate">{st.title || `${st.sourceName} ➔ ${st.destName}`}</div>
+                          <div className="text-[10px] text-ink-secondary">{st.distanceKm} km • {st.vehicleName}</div>
+                          <div className="text-[11px] font-bold text-success font-mono">₹{st.savedCostINR || costInfo.savedCostINR} Saved</div>
                         </div>
-                        <div className="flex justify-between text-[#5f6368]">
-                          <span>Charging Cost:</span>
-                          <span className="font-mono font-bold text-[#1e8e3e]">₹{estEvCost}</span>
-                        </div>
-                        <div className="flex justify-between text-[#5f6368]">
-                          <span>Petrol Cost:</span>
-                          <span className="font-mono font-bold text-[#d93025]">₹{estPetrolCost}</span>
-                        </div>
-                        <div className="flex justify-between text-[#202124] font-bold pt-1 border-t border-[#dadce0]">
-                          <span>Net Savings:</span>
-                          <span className="font-mono text-[#1e8e3e]">₹{netSavings}</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          onLoadTripOnMap(
-                            { lat: t.sourceCoords[0], lng: t.sourceCoords[1], displayName: t.sourceName },
-                            { lat: t.destCoords[0], lng: t.destCoords[1], displayName: t.destName }
-                          );
-                          onClose();
-                        }}
-                        className="w-full py-1.5 mt-2 bg-blue-50 hover:bg-blue-100 text-[#1a73e8] border border-blue-200 rounded-lg text-[11px] font-semibold transition-all text-center cursor-pointer"
-                      >
-                        Load on Map ➔
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* PAST TRIPS TABLE & SEARCH */}
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <div>
-                <h4 className="font-bold text-xs text-[#202124] flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-[#1a73e8]" />
-                  <span>{user.name.split(' ')[0]}'s Saved Trips ({filteredTrips.length})</span>
-                </h4>
-                <p className="text-[11px] text-[#5f6368]">Only visible to your logged in account</p>
-              </div>
-
-              {/* Search Box */}
-              {trips.length > 0 && (
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-3.5 h-3.5 text-[#5f6368] absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    placeholder="Search trips by city or route..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#f8f9fa] border border-[#dadce0] rounded-full focus:outline-none focus:border-[#1a73e8] text-[#202124]"
-                  />
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {isLoading ? (
-              <div className="p-8 text-center text-xs text-[#5f6368] bg-[#f8f9fa] rounded-xl border border-[#dadce0]">
-                <RotateCw className="w-5 h-5 animate-spin text-[#1a73e8] mx-auto mb-2" />
-                Loading your saved trips...
-              </div>
-            ) : filteredTrips.length > 0 ? (
-              <div className="bg-white border border-[#dadce0] rounded-xl overflow-hidden divide-y divide-[#dadce0] shadow-sm">
-                {filteredTrips.map((t) => {
-                  const isChecked = selectedTripIds.includes(t._id);
-                  const costInfo = calculateTripCostAndSavings(t.distanceKm || 0);
-                  const estEvCost = t.chargingCostINR || costInfo.evChargingCostINR;
-                  const netSavings = t.savedCostINR || costInfo.savedCostINR;
+              {/* Trips Table Controls */}
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <h4 className="font-bold text-xs flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-primary" />
+                      <span>Saved Trips ({filteredTrips.length})</span>
+                    </h4>
+                  </div>
 
-                  return (
-                    <div 
-                      key={t._id} 
-                      className="p-3.5 hover:bg-[#f8f9fa] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                    >
-                      
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleTripSelection(t._id)}
-                          className="text-[#1a73e8] cursor-pointer"
-                          title="Select to compare side-by-side"
-                        >
-                          {isChecked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-slate-400" />}
-                        </button>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="font-bold text-xs text-[#202124] truncate">
-                            {t.title || `${t.sourceName} ➔ ${t.destName}`}
-                          </div>
-                          <div className="text-[11px] text-[#5f6368] flex items-center gap-2 mt-0.5 truncate">
-                            <span>{t.vehicleName || 'Tata Nexon EV Max'}</span>
-                            <span>•</span>
-                            <span className="font-mono text-[#1a73e8] font-bold">{t.distanceKm} km</span>
-                            {t.stopsCount > 0 && (
-                              <>
-                                <span>•</span>
-                                <span>{t.stopsCount} stop{t.stopsCount > 1 ? 's' : ''}</span>
-                              </>
-                            )}
-                            <span>•</span>
-                            <span>{new Date(t.createdAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
-                        <div className="text-right pr-2">
-                          <div className="text-xs font-mono font-bold text-[#1e8e3e]">₹{netSavings} Saved</div>
-                          <div className="text-[10px] text-[#5f6368]">EV: ₹{estEvCost}</div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            onLoadTripOnMap(
-                              { lat: t.sourceCoords[0], lng: t.sourceCoords[1], displayName: t.sourceName },
-                              { lat: t.destCoords[0], lng: t.destCoords[1], displayName: t.destName }
-                            );
-                            onClose();
-                          }}
-                          className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1a73e8] border border-[#dadce0] rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
-                        >
-                          View Map
-                        </button>
-
-                        <button
-                          onClick={(e) => handleDeleteTrip(t._id, e)}
-                          disabled={deletingTripId === t._id}
-                          className="p-1.5 text-slate-400 hover:text-[#d93025] hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200 cursor-pointer disabled:opacity-50"
-                          title="Delete trip from account"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* Search */}
+                    <div className="relative flex-1 sm:w-48">
+                      <Search className="w-3.5 h-3.5 text-ink-tertiary absolute left-2.5 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Search trips..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className={`w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-primary ${
+                          isDark 
+                            ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0]' 
+                            : 'bg-white border-surface-border text-ink'
+                        }`}
+                      />
                     </div>
-                  );
-                })}
-              </div>
-            ) : trips.length > 0 ? (
-              <div className="p-6 text-center bg-[#f8f9fa] rounded-xl border border-[#dadce0] text-xs text-[#5f6368]">
-                No trips matching "{searchQuery}".
-              </div>
-            ) : (
-              <div className="p-8 text-center bg-[#f8f9fa] rounded-xl border border-[#dadce0] space-y-2">
-                <div className="p-3 bg-blue-50 text-[#1a73e8] rounded-full w-fit mx-auto border border-blue-200">
-                  <Database className="w-6 h-6" />
+
+                    {/* Sort Dropdown */}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className={`text-xs rounded-lg px-2 py-1.5 border focus:outline-none focus:ring-1 focus:ring-primary ${
+                        isDark 
+                          ? 'bg-[#0b0f19] border-[rgba(34,211,238,0.15)] text-[#e2e8f0]' 
+                          : 'bg-white border-surface-border text-ink'
+                      }`}
+                    >
+                      <option value="date-desc">Newest First</option>
+                      <option value="distance-desc">Longest First</option>
+                      <option value="savings-desc">Max Savings</option>
+                    </select>
+
+                    {/* CSV Export Button */}
+                    {trips.length > 0 && (
+                      <button
+                        onClick={handleExportCSV}
+                        className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all ${
+                          isDark 
+                            ? 'border-[rgba(34,211,238,0.2)] text-primary hover:bg-[#1a2035]' 
+                            : 'border-surface-border text-primary hover:bg-surface-subtle'
+                        }`}
+                        title="Download trip history as CSV"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <h5 className="font-bold text-xs text-[#202124]">No Trips Saved Under Your Account Yet</h5>
-                <p className="text-[11px] text-[#5f6368] max-w-sm mx-auto">
-                  Plan a highway route in the map planner and click <strong>"Save Trip"</strong> to record lifetime fuel savings and EV analytics under your profile.
-                </p>
+
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : filteredTrips.length > 0 ? (
+                  <div className={`rounded-xl overflow-hidden divide-y border shadow-card ${
+                    isDark 
+                      ? 'bg-[#111827] border-[rgba(34,211,238,0.15)] divide-[rgba(34,211,238,0.1)]' 
+                      : 'bg-white border-surface-border divide-surface-border'
+                  }`}>
+                    {filteredTrips.map((t) => {
+                      const isChecked = selectedTripIds.includes(t._id);
+                      const costInfo = calculateTripCostAndSavings(t.distanceKm || 0);
+                      const estEvCost = t.chargingCostINR || costInfo.evChargingCostINR;
+                      const netSavings = t.savedCostINR || costInfo.savedCostINR;
+
+                      return (
+                        <div 
+                          key={t._id} 
+                          className={`p-3.5 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                            isDark ? 'hover:bg-[#1a2035]' : 'hover:bg-surface-subtle'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleTripSelection(t._id)}
+                              className="text-primary cursor-pointer"
+                              title="Select to compare"
+                            >
+                              {isChecked ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5 text-ink-tertiary" />}
+                            </button>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-xs truncate">
+                                {t.title || `${t.sourceName} ➔ ${t.destName}`}
+                              </div>
+                              <div className="text-[11px] text-ink-secondary flex items-center gap-2 mt-0.5 truncate">
+                                <span>{t.vehicleName || 'Tata Nexon EV Max'}</span>
+                                <span>•</span>
+                                <span className="font-mono text-primary font-bold">{t.distanceKm} km</span>
+                                {t.stopsCount > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{t.stopsCount} stop{t.stopsCount > 1 ? 's' : ''}</span>
+                                  </>
+                                )}
+                                <span>•</span>
+                                <span>{new Date(t.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                            <div className="text-right pr-2">
+                              <div className="text-xs font-mono font-bold text-success">₹{netSavings} Saved</div>
+                              <div className="text-[10px] text-ink-secondary">EV: ₹{estEvCost}</div>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                onLoadTripOnMap(
+                                  { lat: t.sourceCoords[0], lng: t.sourceCoords[1], displayName: t.sourceName },
+                                  { lat: t.destCoords[0], lng: t.destCoords[1], displayName: t.destName }
+                                );
+                                onClose();
+                              }}
+                              className={`px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all shadow-card cursor-pointer ${
+                                isDark 
+                                  ? 'bg-[#1a2035] border-[rgba(34,211,238,0.15)] text-primary hover:bg-[#22d3ee]/10' 
+                                  : 'bg-white border-surface-border text-primary hover:bg-surface-subtle'
+                              }`}
+                            >
+                              View Map
+                            </button>
+
+                            <button
+                              onClick={(e) => handleDeleteTrip(t._id, e)}
+                              disabled={deletingTripId === t._id}
+                              className="p-1.5 text-ink-tertiary hover:text-danger hover:bg-danger/10 rounded-lg transition-colors cursor-pointer"
+                              title="Delete trip"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : trips.length > 0 ? (
+                  <div className={`p-6 text-center rounded-xl border text-xs text-ink-secondary ${surfaceSubtle}`}>
+                    No trips matching "{searchQuery}".
+                  </div>
+                ) : (
+                  <div className={`p-8 text-center rounded-xl border space-y-2 ${surfaceSubtle}`}>
+                    <div className="p-3 bg-primary/10 text-primary rounded-full w-fit mx-auto border border-primary/20">
+                      <Database className="w-6 h-6" />
+                    </div>
+                    <h5 className="font-bold text-xs">No Trips Saved Under Your Account Yet</h5>
+                    <p className="text-[11px] text-ink-secondary max-w-sm mx-auto">
+                      Plan a highway route in the map planner and click <strong>"Save Trip"</strong> to record lifetime fuel savings and EV analytics.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-
-          </div>
-          </>
+            </>
           )}
-
         </div>
-
       </div>
     </div>
   );

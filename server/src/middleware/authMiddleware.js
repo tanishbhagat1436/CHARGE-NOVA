@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'chargenova_secret_key_2026';
 
 // Mandatory Auth Middleware
 export const protect = async (req, res, next) => {
+
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -59,3 +60,5 @@ export const optionalAuth = async (req, res, next) => {
   }
   next();
 };
+
+export const requireAuth = protect;

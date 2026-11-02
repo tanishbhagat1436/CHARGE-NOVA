@@ -4,24 +4,70 @@
 
 /* 
   ========================================================
-  CHARGE NOVA — CLEAN CLASSIC GOOGLE MAPS THEME
+  CHARGE NOVA — CLEAN SAAS DESIGN SYSTEM
+  Light mode default · Dark mode via .dark class
   ========================================================
 */
+
+/* ── Design Tokens ─────────────────────────────────────── */
 :root {
-  --bg-primary: #f8f9fa;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --border-subtle: #dadce0;
-  
-  --google-blue: #1a73e8;
-  --google-blue-hover: #1557b0;
-  --google-green: #1e8e3e;
-  --google-green-hover: #137333;
-  --google-red: #d93025;
-  --google-yellow: #f9ab00;
-  
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
+  /* Surfaces */
+  --bg-page:      #f8fafc;
+  --bg-surface:   #ffffff;
+  --bg-muted:     #f1f5f9;
+  --border:       #e2e8f0;
+  --border-md:    #cbd5e1;
+
+  /* Text */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary:  #94a3b8;
+
+  /* Brand */
+  --color-primary:       #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-success:       #16a34a;
+  --color-warning:       #d97706;
+  --color-danger:        #dc2626;
+
+  /* Scrollbar */
+  --scrollbar-track:  #f1f5f9;
+  --scrollbar-thumb:  #cbd5e1;
+  --scrollbar-hover:  #94a3b8;
+}
+
+/* ── Dark / Night HUD Tokens ───────────────────────────── */
+.dark {
+  --bg-page:      #0b0f19;
+  --bg-surface:   #111827;
+  --bg-muted:     #1a2035;
+  --border:       rgba(34, 211, 238, 0.12);
+  --border-md:    rgba(34, 211, 238, 0.22);
+
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary:  #64748b;
+
+  --color-primary:       #38bdf8;
+  --color-primary-hover: #7dd3fc;
+  --color-success:       #34d399;
+  --color-warning:       #fbbf24;
+  --color-danger:        #f87171;
+
+  --scrollbar-track:  #111827;
+  --scrollbar-thumb:  #1e293b;
+  --scrollbar-hover:  #334155;
+}
+
+/* ── Base Reset ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
 html, body {
@@ -30,9 +76,10 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-page);
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -42,41 +89,116 @@ html, body {
   flex-direction: column;
 }
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
-::-webkit-scrollbar-track {
-  background: #f1f3f4;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #dadce0;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #bdc1c6;
-}
-
-/* Leaflet Container Styling */
+/* ── Leaflet ────────────────────────────────────────────── */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background-color: #f1f3f4 !important;
+  background-color: #e2e8f0 !important;
 }
 
-/* Leaflet Popup Styling - Google Maps Style */
 .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #202124 !important;
-  border: 1px solid #dadce0 !important;
-  border-radius: 0.75rem !important;
-  box-shadow: 0 4px 12px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.2) !important;
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.875rem !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
 }
 
 .leaflet-popup-tip {
-  background: #ffffff !important;
+  background: var(--bg-surface) !important;
 }
+
+/* ── Skeleton Shimmer ───────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-muted) 25%,
+    var(--border) 50%,
+    var(--bg-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #1a2035 25%,
+    #1e293b 50%,
+    #1a2035 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Toast Slide-Up ─────────────────────────────────────── */
+@keyframes toast-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Input Range Thumb (cross-browser) ─────────────────── */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 6px;
+  background: var(--border-md);
+  outline: none;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+input[type='range']::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type='range']::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 2px solid white;
+  cursor: pointer;
+}
+
+/* ── Focus Ring Utility ─────────────────────────────────── */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Leaflet Controls in Dark Mode ─────────────────────── */
+.dark .leaflet-control-zoom a {
+  background: #111827 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(34,211,238,0.15) !important;
+}
+.dark .leaflet-control-zoom a:hover {
+  background: #1a2035 !important;
+}
+.dark .leaflet-bar { border-color: rgba(34,211,238,0.15) !important; }
+
+/* ── Battery SOC Bar Pulse ──────────────────────────────── */
+@keyframes soc-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+.soc-critical { animation: soc-pulse 1s ease-in-out infinite; }

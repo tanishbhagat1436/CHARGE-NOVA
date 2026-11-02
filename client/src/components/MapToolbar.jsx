@@ -1,192 +1,182 @@
 import React from 'react';
-import { Compass, BarChart3, Activity, BatteryCharging, Crosshair, Sun, Moon, RotateCcw, Box, ShieldAlert } from 'lucide-react';
+import {
+  Compass, BarChart3, Activity, BatteryCharging,
+  Crosshair, Sun, Moon, RotateCcw, Box, ShieldAlert,
+  Sliders
+} from 'lucide-react';
 
 export default function MapToolbar({
-  showNavBanner,
-  setShowNavBanner,
-  showSummaryCard,
-  setShowSummaryCard,
-  showTrafficLegend,
-  setShowTrafficLegend,
-  showBottomDashboard,
-  setShowBottomDashboard,
-  activeTile,
-  setActiveTile,
-  userGpsLocation,
-  onRecenterUser,
+  showNavBanner, setShowNavBanner,
+  showSummaryCard, setShowSummaryCard,
+  showTrafficLegend, setShowTrafficLegend,
+  showBottomDashboard, setShowBottomDashboard,
+  activeTile, setActiveTile,
+  userGpsLocation, onRecenterUser,
   onResetBounds,
-  is3dTilted,
-  setIs3dTilted,
+  is3dTilted, setIs3dTilted,
   onOpenSosModal,
   onOpenLandingPage,
-  hasRoute
+  hasRoute,
+  onOpenMobilePlan,
 }) {
   const isDark = activeTile === 'dark';
 
+  /* ── Shell surface ── */
+  const shell = isDark
+    ? 'bg-[#0b0f19]/90 border border-[rgba(34,211,238,0.15)] shadow-hud backdrop-blur-md'
+    : 'bg-white/95 border border-surface-border shadow-card-md backdrop-blur-sm';
+
+  /* ── Button factories ── */
+  const btn = (active, activeStyle, inactiveStyle) =>
+    `px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer shrink-0 ${active ? activeStyle : inactiveStyle}`;
+
+  const ghostBtn = isDark
+    ? 'bg-transparent text-[#94a3b8] border-transparent hover:text-[#e2e8f0] hover:bg-white/10'
+    : 'bg-transparent text-ink-secondary border-transparent hover:text-ink hover:bg-surface-subtle';
+
+  const activeBlue = isDark
+    ? 'bg-primary/20 text-[#38bdf8] border-primary/30'
+    : 'bg-primary/10 text-primary border-primary/20 shadow-sm';
+
+  const activeGreen = isDark
+    ? 'bg-success/20 text-[#34d399] border-success/30'
+    : 'bg-success/10 text-success border-success/20 shadow-sm';
+
+  const activeAmber = isDark
+    ? 'bg-warning/20 text-[#fbbf24] border-warning/30'
+    : 'bg-warning/10 text-warning border-warning/20 shadow-sm';
+
+  const iconBtn = (active) => `p-1.5 rounded-full transition-all border cursor-pointer shrink-0 ${
+    active
+      ? isDark ? 'bg-primary/20 text-[#38bdf8] border-primary/30' : 'bg-primary/10 text-primary border-primary/20'
+      : isDark ? 'bg-transparent text-[#94a3b8] border-transparent hover:text-[#e2e8f0] hover:bg-white/10'
+                : 'bg-transparent text-ink-secondary border-transparent hover:text-ink hover:bg-surface-subtle'
+  }`;
+
   return (
-    <div 
-      className="fixed top-4 right-4 font-sans animate-in slide-in-from-top-4 duration-300"
+    <div
+      className="fixed top-3 left-3 right-3 md:left-auto md:right-4 font-sans animate-slide-down flex justify-end pointer-events-none"
       style={{ zIndex: 9999 }}
     >
-      <div className={`p-1.5 rounded-full shadow-lg flex items-center space-x-1 flex-wrap gap-y-1 backdrop-blur-md border transition-all ${
-        isDark 
-          ? 'bg-slate-900/90 border-slate-700 text-white shadow-cyan-950/40' 
-          : 'bg-white/95 border-[#dadce0] text-[#202124]'
-      }`}>
-        
-        {/* About / Landing Page Button */}
+      <div className={`pointer-events-auto p-1.5 rounded-full flex items-center space-x-1 overflow-x-auto max-w-full scrollbar-none flex-nowrap ${shell}`}>
+
+        {/* Mobile Plan / Edit Route Button */}
+        {onOpenMobilePlan && (
+          <button
+            onClick={onOpenMobilePlan}
+            className="px-3 py-1.5 bg-primary text-white rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm md:hidden shrink-0 cursor-pointer"
+            title="Edit Route"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Plan</span>
+          </button>
+        )}
+
+        {/* Home / Landing Page */}
         {onOpenLandingPage && (
           <button
             onClick={onOpenLandingPage}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 border cursor-pointer ${
-              isDark 
-                ? 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700' 
-                : 'bg-white hover:bg-slate-100 text-[#3c4043] border-transparent hover:border-[#dadce0]'
-            }`}
-            title="View Landing Page & Features"
+            className={btn(false, '', ghostBtn)}
+            title="View Landing Page"
           >
             <span>Home</span>
           </button>
         )}
 
-        {/* SOS Emergency Button */}
+        {/* SOS */}
         <button
           onClick={onOpenSosModal}
-          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-[#d93025] border border-red-200 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+          className="px-3 py-1.5 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
           title="24x7 EV Emergency Helpline"
         >
-          <ShieldAlert className="w-3.5 h-3.5 text-[#d93025]" />
+          <ShieldAlert className="w-3.5 h-3.5" />
           <span>SOS</span>
         </button>
 
-        {/* Toggle Turn Guidance Banner */}
+        {/* Turns */}
         <button
           onClick={() => setShowNavBanner(!showNavBanner)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border cursor-pointer ${
-            showNavBanner
-              ? isDark 
-                ? 'bg-cyan-950 text-[#00e5ff] border-cyan-700 shadow-sm'
-                : 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
-              : isDark 
-                ? 'bg-slate-800/80 text-slate-300 hover:text-white border-transparent hover:bg-slate-700'
-                : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
-          }`}
+          className={btn(showNavBanner, activeBlue, ghostBtn)}
         >
-          <Compass className={`w-3.5 h-3.5 ${isDark ? 'text-[#00e5ff]' : 'text-[#1a73e8]'}`} />
+          <Compass className={`w-3.5 h-3.5 ${showNavBanner ? (isDark ? 'text-[#38bdf8]' : 'text-primary') : ''}`} />
           <span>Turns</span>
         </button>
 
-        {/* Toggle Trip Analytics & Savings */}
+        {/* Trip Details */}
         <button
           onClick={() => setShowSummaryCard(!showSummaryCard)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border cursor-pointer ${
-            showSummaryCard
-              ? isDark 
-                ? 'bg-cyan-950 text-[#00e5ff] border-cyan-700 shadow-sm'
-                : 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
-              : isDark 
-                ? 'bg-slate-800/80 text-slate-300 hover:text-white border-transparent hover:bg-slate-700'
-                : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
-          }`}
+          className={btn(showSummaryCard, activeBlue, ghostBtn)}
         >
-          <BarChart3 className={`w-3.5 h-3.5 ${isDark ? 'text-[#00e5ff]' : 'text-[#1a73e8]'}`} />
-          <span>Trip Details</span>
+          <BarChart3 className={`w-3.5 h-3.5 ${showSummaryCard ? (isDark ? 'text-[#38bdf8]' : 'text-primary') : ''}`} />
+          <span>Details</span>
         </button>
 
-        {/* Toggle Traffic Flow */}
+        {/* Traffic */}
         <button
           onClick={() => setShowTrafficLegend(!showTrafficLegend)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border cursor-pointer ${
-            showTrafficLegend
-              ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-              : isDark
-                ? 'bg-slate-800/80 text-slate-300 hover:text-white border-transparent hover:bg-slate-700'
-                : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
-          }`}
+          className={btn(showTrafficLegend, activeAmber, ghostBtn)}
         >
-          <Activity className="w-3.5 h-3.5 text-amber-500" />
+          <Activity className={`w-3.5 h-3.5 ${showTrafficLegend ? 'text-warning' : ''}`} />
           <span>Traffic</span>
         </button>
 
-        {/* Toggle Bottom Dashboard */}
+        {/* Battery panel */}
         <button
           onClick={() => setShowBottomDashboard(!showBottomDashboard)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1.5 transition-all border cursor-pointer ${
-            showBottomDashboard
-              ? 'bg-emerald-50 text-[#1e8e3e] border-emerald-200 shadow-sm'
-              : isDark
-                ? 'bg-slate-800/80 text-slate-300 hover:text-white border-transparent hover:bg-slate-700'
-                : 'bg-white text-[#5f6368] hover:text-[#202124] border-transparent hover:bg-slate-100'
-          }`}
+          className={btn(showBottomDashboard, activeGreen, ghostBtn)}
         >
-          <BatteryCharging className="w-3.5 h-3.5 text-[#1e8e3e]" />
+          <BatteryCharging className={`w-3.5 h-3.5 ${showBottomDashboard ? 'text-success' : ''}`} />
           <span>Battery</span>
         </button>
 
-        {/* 3D Tilt Toggle */}
+        {/* 3D Tilt */}
         <button
           onClick={() => setIs3dTilted(!is3dTilted)}
-          className={`px-2.5 py-1.5 text-xs font-semibold rounded-full flex items-center gap-1 transition-all border cursor-pointer ${
-            is3dTilted
-              ? isDark 
-                ? 'bg-cyan-950 text-[#00e5ff] border-cyan-700 shadow-sm'
-                : 'bg-blue-50 text-[#1a73e8] border-blue-200 shadow-sm'
-              : isDark
-                ? 'bg-slate-800 text-slate-300 border-transparent hover:bg-slate-700'
-                : 'bg-white text-[#5f6368] border-transparent hover:bg-slate-100'
-          }`}
-          title="Toggle 3D Perspective Tilt"
+          className={btn(is3dTilted, activeBlue, ghostBtn)}
+          title="Toggle 3D Perspective"
         >
           <Box className="w-3.5 h-3.5" />
           <span>3D</span>
         </button>
 
-        {/* Fly to GPS Location */}
+        {/* GPS recenter */}
         {userGpsLocation && (
           <button
             onClick={onRecenterUser}
-            className={`p-1.5 rounded-full transition-all border cursor-pointer ${
-              isDark 
-                ? 'bg-slate-800 hover:bg-slate-700 text-[#00e5ff] border-slate-700' 
-                : 'bg-white hover:bg-slate-100 text-[#1a73e8] border-transparent hover:border-[#dadce0]'
-            }`}
-            title="Fly to Live GPS Location"
+            className={iconBtn(false)}
+            title="Fly to GPS Location"
           >
             <Crosshair className="w-4 h-4" />
           </button>
         )}
 
-        {/* Day / Night HUD Switcher */}
+        {/* Day / Night switcher */}
         <button
           onClick={() => setActiveTile(isDark ? 'osm' : 'dark')}
-          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer shadow-xs ${
+          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
             isDark
-              ? 'bg-cyan-950/80 text-[#00e5ff] border-cyan-800'
-              : 'bg-amber-50 text-amber-700 border-amber-200'
+              ? 'bg-[#22d3ee]/15 text-[#22d3ee] border-[#22d3ee]/25'
+              : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
           }`}
-          title="Switch Day Mode / Night HUD Map"
+          title="Switch Day / Night HUD"
         >
           {isDark ? (
             <>
-              <Moon className="w-3.5 h-3.5 text-[#00e5ff] fill-current" />
+              <Moon className="w-3.5 h-3.5 fill-current" />
               <span>Night HUD</span>
             </>
           ) : (
             <>
-              <Sun className="w-3.5 h-3.5 text-amber-500 fill-current" />
-              <span>Day Mode</span>
+              <Sun className="w-3.5 h-3.5 fill-current" />
+              <span>Day</span>
             </>
           )}
         </button>
 
-        {/* Reset Bounds */}
+        {/* Reset bounds */}
         <button
           onClick={onResetBounds}
-          className={`p-1.5 rounded-full transition-colors border cursor-pointer ${
-            isDark 
-              ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-transparent' 
-              : 'bg-white hover:bg-slate-100 text-[#5f6368] hover:text-[#202124] border-transparent hover:border-[#dadce0]'
-          }`}
+          className={iconBtn(false)}
           title="Reset Map View"
         >
           <RotateCcw className="w-4 h-4" />
@@ -196,4 +186,3 @@ export default function MapToolbar({
     </div>
   );
 }
-

@@ -1,11 +1,13 @@
-// High-Performance In-Memory Geocoding Cache to avoid Nominatim 429 rate limits
+import axios from 'axios';
+
+// High-Performance In-Memory Geocoding Cache to avoid Nominatim rate limits
 const geocodeCache = new Map();
 const reverseCache = new Map();
 
 /**
  * Geocode location query using Nominatim with in-memory caching and resilient fallbacks
  * @param {string} query 
- * @returns {Promise<Array<{lat: number, lng: number, displayName: string}>>}
+ * @returns {Promise<Array<{lat: number, lng: number, displayName: string, city: string, state: string}>>}
  */
 export const searchLocation = async (query) => {
   if (!query || query.trim().length < 2) return [];
@@ -27,11 +29,7 @@ export const searchLocation = async (query) => {
         limit: 5,
         ...(isIndiaSpecific ? { countrycodes: 'in' } : {})
       },
-      headers: {
-        'Accept-Language': 'en-US,en;q=0.9',
-        'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
-      },
-      timeout: 3500
+      timeout: 4500
     });
 
     let data = response.data;
@@ -45,11 +43,7 @@ export const searchLocation = async (query) => {
           addressdetails: 1,
           limit: 5
         },
-        headers: {
-          'Accept-Language': 'en-US,en;q=0.9',
-          'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
-        },
-        timeout: 3500
+        timeout: 4500
       });
       data = fallbackRes.data || [];
     }
@@ -73,10 +67,10 @@ export const searchLocation = async (query) => {
 };
 
 /**
- * Reverse geocode user's live GPS coordinates [lat, lng] into a human-readable location name
+ * Reverse geocode coordinates [lat, lng] into a human-readable location name
  * @param {number} lat 
  * @param {number} lng 
- * @returns {Promise<{lat: number, lng: number, displayName: string}>}
+ * @returns {Promise<{lat: number, lng: number, displayName: string, city: string}>}
  */
 export const reverseGeocode = async (lat, lng) => {
   const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
@@ -92,10 +86,7 @@ export const reverseGeocode = async (lat, lng) => {
         format: 'json',
         addressdetails: 1
       },
-      headers: {
-        'User-Agent': 'ChargeNova-EVTripPlanner/1.0'
-      },
-      timeout: 3000
+      timeout: 4500
     });
 
     const addr = response.data?.address;
@@ -113,7 +104,7 @@ export const reverseGeocode = async (lat, lng) => {
 
     return result;
   } catch (error) {
-    console.error('Reverse Geocoding Error:', error);
+    console.warn('Reverse Geocoding Error:', error.message);
     return {
       lat,
       lng,
@@ -124,10 +115,11 @@ export const reverseGeocode = async (lat, lng) => {
 };
 
 /**
- * Retrieves the best available live user location using a 3-stage fallback:
- * 1. High-accuracy HTML5 browser Geolocation (5s timeout)
- * 2. Low-accuracy HTML5 browser Geolocation (8s timeout)
- * 3. Free IP-based Geolocation (bigdatacloud fallback)
+ * Retrieves the best available live user location:
+ * 1. Fast browser HTML5 Geolocation (low-accuracy first, which is instant on laptops/Wi-Fi)
+ * 2. High-accuracy fallback
+ * 3. IP-based Geolocation fallback (BigDataCloud reverse geocode client)
+ * 4. Safe default (New Delhi)
  * @returns {Promise<{lat: number, lng: number, displayName: string, city: string}>}
  */
 export const getBestUserLocation = async () => {
@@ -137,7 +129,7 @@ export const getBestUserLocation = async () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         (err) => reject(err),
-        { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 5000 : 8000, maximumAge: 60000 }
+        { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 5000 : 4000, maximumAge: 60000 }
       );
     });
   };
@@ -145,14 +137,11 @@ export const getBestUserLocation = async () => {
   try {
     let coords;
     try {
-      coords = await getBrowserCoords(true);
+      coords = await getBrowserCoords(false);
     } catch (e1) {
-      console.warn('High-accuracy GPS failed/timed out, trying low-accuracy...', e1?.message);
       try {
-        coords = await getBrowserCoords(false);
-      } catch (e2) {
-        console.warn('Low-accuracy GPS failed/blocked, attempting IP geolocation...', e2?.message);
-      }
+        coords = await getBrowserCoords(true);
+      } catch (e2) {}
     }
 
     if (coords) {
@@ -160,7 +149,7 @@ export const getBestUserLocation = async () => {
     }
 
     // IP-based Geolocation Fallback
-    const ipResponse = await axios.get('https://api.bigdatacloud.net/data/reverse-geocode-client', { timeout: 5000 });
+    const ipResponse = await axios.get('https://api.bigdatacloud.net/data/reverse-geocode-client', { timeout: 4000 });
     if (ipResponse.data && ipResponse.data.latitude && ipResponse.data.longitude) {
       const { latitude, longitude, city, principalSubdivision } = ipResponse.data;
       const locationName = city || principalSubdivision || 'Current Location';
@@ -172,7 +161,7 @@ export const getBestUserLocation = async () => {
       };
     }
   } catch (ipError) {
-    console.error('IP Geolocation error:', ipError);
+    console.warn('Geolocation fallback notice:', ipError?.message);
   }
 
   // Default fallback if all layers fail
@@ -183,4 +172,3 @@ export const getBestUserLocation = async () => {
     city: 'New Delhi'
   };
 };
-
